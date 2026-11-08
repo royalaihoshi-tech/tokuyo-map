@@ -7,6 +7,8 @@ const baseMaps={
 let activeBase=baseMaps.streets.addTo(map);
 // Show every facility marker separately. Do not replace nearby pins with count bubbles.
 map.removeLayer(markers);markers=L.layerGroup().addTo(map);
+// Display a shorter facility name while preserving the official name for matching and search.
+const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
 document.querySelector('.footer').textContent='出典：厚生労働省「介護サービス情報公表システム」2026年6月末時点 ／ 地図：Esri';
 document.querySelector('.sub').textContent='千葉県全域｜厚労省の公表施設データ';
 document.querySelector('.notice').innerHTML='施設名・住所・位置は厚労省の公式データです。待機人数は一部の施設のみCareOffer掲載値を併記しています。<b>「不明」は0人ではありません。</b>';
@@ -181,14 +183,15 @@ draw=function(fit=false){
  $('list').innerHTML=visible.length?'':'<div class="empty">条件に一致する施設はありません。</div>';
  const bounds=[];
  for(const f of visible){
-  const cls=level(f.wait),regional=f.type==='地域密着型特養',pin=`<div class="pin ${cls}">${f.wait??'?'}</div>`,roomLabels={unit:'ユ',private:'個',shared:'多'},roomIcons=(f.roomTypes||[]).filter(t=>roomLabels[t]).map(t=>`<span class="room-icon">${roomLabels[t]}</span>`).join(''),icon=L.divIcon({html:`${regional?`<div class="regional-frame">${pin}</div>`:pin}<span class="room-icons">${roomIcons}</span><span class="pin-label ${cls}${regional?' regional-label':''}">${esc(f.name)}</span>`,iconSize:[36,40],iconAnchor:[18,40]});
+  const shortName=displayFacilityName(f.name);
+  const cls=level(f.wait),regional=f.type==='地域密着型特養',pin=`<div class="pin ${cls}">${f.wait??'?'}</div>`,roomLabels={unit:'ユ',private:'個',shared:'多'},roomIcons=(f.roomTypes||[]).filter(t=>roomLabels[t]).map(t=>`<span class="room-icon">${roomLabels[t]}</span>`).join(''),icon=L.divIcon({html:`${regional?`<div class="regional-frame">${pin}</div>`:pin}<span class="room-icons">${roomIcons}</span><span class="pin-label ${cls}${regional?' regional-label':''}">${esc(shortName)}</span>`,iconSize:[36,40],iconAnchor:[18,40]});
   const waiting=f.wait==null?'不明':f.wait+'人';
   const detailURL=f.id&&/^\d{10}$/.test(f.id)?`https://www.kaigokensaku.mhlw.go.jp/12/index.php?action_kouhyou_detail_024_kani=true&JigyosyoCd=${f.id}-00&ServiceCd=${f.serviceCode||510}#title07`:'';
-  const m=L.marker([f.lat,f.lng],{icon}).bindTooltip(`${esc(f.name)}｜待機 ${waiting}`,{direction:'top'})
-    .bindPopup(`<div class="popup"><h3>${esc(f.name)}</h3><p>${esc(f.address)}</p><p><b>待機人数：${waiting}</b></p><p>施設区分：${esc(f.type||'未登録')}</p><p><b>厚労省 公表日時：${f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得'}</b></p>${f.capacity?`<p>定員：${esc(f.capacity)}人</p>`:''}${f.phone?`<p>電話：${esc(f.phone)}</p>`:''}${detailURL?`<p><a href="${detailURL}" target="_blank" rel="noopener noreferrer">厚労省の施設詳細を確認 ↗</a></p>`:''}${f.website&&/^https?:\/\//.test(f.website)?`<p><a href="${esc(f.website)}" target="_blank" rel="noopener noreferrer">施設の公式サイト ↗</a></p>`:''}</div>`,{maxWidth:350});
+  const m=L.marker([f.lat,f.lng],{icon}).bindTooltip(`${esc(shortName)}｜待機 ${waiting}`,{direction:'top'})
+    .bindPopup(`<div class="popup"><h3>${esc(shortName)}</h3><p>${esc(f.address)}</p><p><b>待機人数：${waiting}</b></p><p>施設区分：${esc(f.type||'未登録')}</p><p><b>厚労省 公表日時：${f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得'}</b></p>${f.capacity?`<p>定員：${esc(f.capacity)}人</p>`:''}${f.phone?`<p>電話：${esc(f.phone)}</p>`:''}${detailURL?`<p><a href="${detailURL}" target="_blank" rel="noopener noreferrer">厚労省の施設詳細を確認 ↗</a></p>`:''}${f.website&&/^https?:\/\//.test(f.website)?`<p><a href="${esc(f.website)}" target="_blank" rel="noopener noreferrer">施設の公式サイト ↗</a></p>`:''}</div>`,{maxWidth:350});
   placedMarkers.push({marker:m,original:L.latLng(f.lat,f.lng)});
   markers.addLayer(m);bounds.push([f.lat,f.lng]);
-  const el=document.createElement('article');el.className='facility';el.innerHTML=`<div class="name">${esc(f.name)}</div><div class="addr">${esc(f.address)}</div><div class="meta"><span class="pill ${cls==='unknown'?'unknown':''}">待機 ${waiting}</span><span>${esc(f.type||'')}</span></div>`;
+  const el=document.createElement('article');el.className='facility';el.innerHTML=`<div class="name">${esc(shortName)}</div><div class="addr">${esc(f.address)}</div><div class="meta"><span class="pill ${cls==='unknown'?'unknown':''}">待機 ${waiting}</span><span>${esc(f.type||'')}</span></div>`;
   el.onclick=()=>{map.setView([f.lat,f.lng],15);m.openPopup()};$('list').append(el)
  }
  repositionSharedMarkers();updateLabelVisibility();
