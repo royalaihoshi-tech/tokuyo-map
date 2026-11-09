@@ -1,15 +1,16 @@
 /* Chiba facilities: MHLW open data, 2026-06-30. */
 map.eachLayer(layer=>{if(layer instanceof L.TileLayer)map.removeLayer(layer)});
 const baseMaps={
+  japan:L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>',minZoom:5,maxZoom:18,maxNativeZoom:18}),
   light:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri, HERE, Garmin, OpenStreetMap contributors',maxZoom:16}),
   streets:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri, HERE, Garmin, OpenStreetMap contributors',maxZoom:18})
 };
-let activeBase=baseMaps.streets.addTo(map);
+let activeBase=baseMaps.japan.addTo(map);
 // Show every facility marker separately. Do not replace nearby pins with count bubbles.
 map.removeLayer(markers);markers=L.layerGroup().addTo(map);
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
-document.querySelector('.footer').textContent='出典：厚生労働省「介護サービス情報公表システム」2026年6月末時点 ／ 地図：Esri';
+document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：国土地理院';
 document.querySelector('.sub').remove();
 document.querySelector('.notice').remove();
 const style=document.createElement('style');style.textContent=`.map-wrap #map{background:#edf4ed}.leaflet-container{font-family:inherit}.map-overlay{border:1px solid #e6eae5;box-shadow:0 5px 18px #244b3515}.pin{width:36px;height:40px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);border-radius:11px 11px 2px 2px;font-size:12px}.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(28,122,87,.18)}.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#177a5a;color:white;font-weight:800}.facility{transition:background .15s}.facility:hover{background:#eef7f1}.map-loading{position:absolute;z-index:900;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#38614f;border:1px solid #dde8e0;border-radius:100px;padding:10px 18px;font-size:12px;box-shadow:0 3px 12px #2345}.app.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}.app.sidebar-hidden .side{visibility:hidden;overflow:hidden}.map-controls{position:absolute;z-index:850;top:16px;left:16px;display:flex;gap:8px}.map-controls button{border:1px solid #dbe4df;box-shadow:0 3px 14px #243a3121;background:#fff;border-radius:10px;padding:10px 12px;color:#244f40;font-weight:700;font-size:13px;cursor:pointer}.map-controls button:hover{background:#f3f8f4}.leaflet-tile-pane{filter:contrast(.92) brightness(1.04)}@media(max-width:750px){.app.sidebar-hidden{grid-template-rows:100dvh 0;grid-template-columns:1fr}.app.sidebar-hidden .side{display:none}.map-controls{top:9px;left:9px}}`;
@@ -67,9 +68,8 @@ document.querySelector('.side .footer').before(historyPanel);
 // Facility names and counts remain available on the map; the long sidebar list is not used.
 document.querySelector('.side .count').remove();
 document.querySelector('.side .results').remove();
-// Brighter, cooler streets resembling a modern Google-style road map.
-// Reuse the existing Esri map tiles, without introducing a new provider or API key.
-style.textContent+=`.map-wrap #map{background:#f5fafb}.leaflet-tile-pane{filter:brightness(1.14) saturate(.83) contrast(.96)!important}.side{background:#fcfefd}.top{padding-bottom:16px}`;
+// Japanese-only GSI labels and stronger road contrast. No CSS bleaching of map tiles.
+style.textContent+=`.map-wrap #map{background:#f6f9fb}.leaflet-tile-pane{filter:none!important}.side{background:#fcfefd}.top{padding-bottom:16px}`;
 const dateInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));
 const timeInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(new Date(iso));
 function renderSyncHistory(entries,persistent){
@@ -171,6 +171,15 @@ style.textContent+='.map-overlay.legend-hidden{display:none}';
 document.getElementById('waiting').remove();
 document.querySelector('.top .filters').style.gridTemplateColumns='1fr';
 const controls=document.createElement('div');controls.className='map-controls filter-toolbar';controls.setAttribute('aria-label','地図の表示と施設の絞り込み');controls.innerHTML='<div class="toolbar-group group-display"><span class="toolbar-heading">表示設定</span><button id="toggle-sidebar" type="button" aria-expanded="true">☰ 設定を閉じる</button></div>';document.querySelector('.map-wrap').append(controls);
+const basemapButton=document.createElement('button');basemapButton.id='toggle-basemap';basemapButton.type='button';basemapButton.textContent='地図：日本語';basemapButton.title='日本語の標準地図と従来の地図を切り替え';controls.querySelector('.group-display').append(basemapButton);
+basemapButton.onclick=()=>{
+ const useEsri=activeBase===baseMaps.japan;
+ map.removeLayer(activeBase);
+ activeBase=(useEsri?baseMaps.streets:baseMaps.japan).addTo(map);
+ activeBase.bringToBack();
+ basemapButton.textContent=useEsri?'地図：従来':'地図：日本語';
+ document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：'+(useEsri?'Esri':'国土地理院');
+};
 document.querySelector('.app').classList.add('sidebar-hidden');
 const sidebarButton=document.getElementById('toggle-sidebar');sidebarButton.textContent='☰ 設定を開く';sidebarButton.setAttribute('aria-expanded','false');
 const legendButton=document.createElement('button');legendButton.id='toggle-legend-window';legendButton.type='button';legendButton.textContent='凡例を表示';legendButton.setAttribute('aria-expanded','false');controls.querySelector('.group-display').append(legendButton);
