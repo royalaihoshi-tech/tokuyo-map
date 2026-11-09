@@ -29,7 +29,7 @@ if(typeof L.maplibreGL==='function'){
      vectorMap.setLayoutProperty(layer.id,'text-allow-overlap',false);
      vectorMap.setPaintProperty(layer.id,'text-halo-color','#ffffff');
      vectorMap.setPaintProperty(layer.id,'text-halo-width',2);
-     vectorMap.setPaintProperty(layer.id,'text-color','#153952');
+     vectorMap.setPaintProperty(layer.id,'text-color','#5c7587');
     }catch(error){console.info('駅名表示の調整を省略しました',layer.id,error.message)}
    }
    // Show local district / neighbourhood names earlier when zooming out.
@@ -72,7 +72,7 @@ map.removeLayer(markers);markers=L.layerGroup().addTo(map);
 // cannot make their names appear. Keep this overlay below facility markers.
 const railwayPane=map.createPane('tokuyoRailwayLabels');railwayPane.style.zIndex='550';railwayPane.style.pointerEvents='none';
 const railwayLabels=L.layerGroup().addTo(map);
-const stationStyle=document.createElement('style');stationStyle.textContent='.tokuyo-station-label{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:max-content;transform:translate(-50%,-50%);font:800 13px/1.3 sans-serif;color:#23455f;text-shadow:-1px -1px 2px #fff,1px 1px 2px #fff,0 0 4px #fff;pointer-events:none}.tokuyo-station-label:before{content:"";display:inline-block;width:7px;height:7px;border:2px solid #fff;border-radius:2px;background:#2864a0;box-shadow:0 0 0 1px #2864a0}.tokuyo-station-label.important{font-size:15px;color:#173e62}';document.head.append(stationStyle);
+const stationStyle=document.createElement('style');stationStyle.textContent='.tokuyo-station-label{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:max-content;transform:translate(-50%,-50%);font:800 13px/1.3 sans-serif;color:#647b8b;text-shadow:-1px -1px 2px #fff,1px 1px 2px #fff,0 0 4px #fff;pointer-events:none}.tokuyo-station-label:before{content:"";display:inline-block;width:7px;height:7px;border:2px solid #fff;border-radius:2px;background:#6089aa;box-shadow:0 0 0 1px #6089aa}.tokuyo-station-label.important{font-size:15px;color:#546e81}';document.head.append(stationStyle);
 let railwayStationData=[];
 function updateRailwayLabels(){
  railwayLabels.clearLayers();const zoom=map.getZoom();
