@@ -26,7 +26,7 @@ if(typeof L.maplibreGL==='function'){
      vectorMap.setLayerZoomRange(layer.id,Math.min(layer.minzoom??8,8),layer.maxzoom??24);
      vectorMap.setLayoutProperty(layer.id,'text-size',['interpolate',['linear'],['zoom'],9,13,12,16,16,19]);
      vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],['get','name'],'']);
-     vectorMap.setLayoutProperty(layer.id,'text-allow-overlap',true);
+     vectorMap.setLayoutProperty(layer.id,'text-allow-overlap',false);
      vectorMap.setPaintProperty(layer.id,'text-halo-color','#ffffff');
      vectorMap.setPaintProperty(layer.id,'text-halo-width',2);
      vectorMap.setPaintProperty(layer.id,'text-color','#153952');
@@ -54,18 +54,11 @@ if(typeof L.maplibreGL==='function'){
    if(/shield|route.?number|highway.?number|junction|railway.?station|train.?station|subway.?station|rail.?station|station.?label/i.test(layer.id))continue;
    // Local-language names are often populated even when name:ja is missing.
    // This retains more neighbourhood names without reverting to Latin labels.
-   try{vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],'']);}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
-  }
-  // Separate, Japanese-only railway station labels for wide zoom levels.
-  // Keep them independent of ordinary POI labels so bus stops stay hidden.
-  const poiLayer=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='symbol'&&l['source-layer']==='poi');
-  if(poiLayer){
-   try{
-    vectorMap.addLayer({id:'tokuyo-rail-station-names',type:'symbol',source:poiLayer.source,'source-layer':'poi',minzoom:7.5,maxzoom:13,
-     filter:['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt'],['==',['get','class'],'railway']],
-     layout:{'text-field':['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],['get','name'],''],'text-font':poiLayer.layout?.['text-font']||['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],8,13,12,17],'text-allow-overlap':true,'text-anchor':'top','text-offset':[0,0.3]},
-     paint:{'text-color':'#153952','text-halo-color':'#ffffff','text-halo-width':2}});
-   }catch(error){console.info('広域用の駅名レイヤーを追加できませんでした',error.message)}
+   const japaneseNames=layer['source-layer']==='place'||layer['source-layer']==='transportation_name';
+   const labelExpression=japaneseNames
+    ?['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],['get','name'],'']
+    :['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],''];
+   try{vectorMap.setLayoutProperty(layer.id,'text-field',labelExpression)}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
   }
  });
 }else activeBase=fallbackMap().addTo(map);
