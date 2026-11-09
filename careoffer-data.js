@@ -14,7 +14,7 @@ if(typeof L.maplibreGL==='function'){
    // Leave city, rail station, street and facility layers at their original zoom levels.
    if(layer.type==='symbol'&&layer['source-layer']==='place'&&/suburb|neighbou?rhood|quarter|district/i.test(layer.id)){
     try{
-     const lower=Math.min(layer.minzoom??9.5,9.5);
+     const lower=Math.min(layer.minzoom??8.5,8.5);
      vectorMap.setLayerZoomRange(layer.id,lower,layer.maxzoom??24);
     }catch(error){console.info('町名の表示縮尺を変更できませんでした',layer.id,error.message)}
    }
@@ -204,6 +204,13 @@ document.querySelector('.top .filters').style.gridTemplateColumns='1fr';
 const controls=document.createElement('div');controls.className='map-controls filter-toolbar';controls.setAttribute('aria-label','地図の表示と施設の絞り込み');controls.innerHTML='<div class="toolbar-group group-display"><span class="toolbar-heading">表示設定</span><button id="toggle-sidebar" type="button" aria-expanded="true">☰ 設定を閉じる</button></div>';document.querySelector('.map-wrap').append(controls);
 document.querySelector('.app').classList.add('sidebar-hidden');
 const sidebarButton=document.getElementById('toggle-sidebar');sidebarButton.textContent='☰ 設定を開く';sidebarButton.setAttribute('aria-expanded','false');
+const pinsButton=document.createElement('button');pinsButton.id='toggle-facility-pins';pinsButton.type='button';pinsButton.textContent='施設ピン：ON';pinsButton.setAttribute('aria-pressed','true');controls.querySelector('.group-display').append(pinsButton);
+pinsButton.onclick=()=>{
+ const visible=map.hasLayer(markers);
+ if(visible){map.removeLayer(markers);map.closePopup()}else{markers.addTo(map)}
+ pinsButton.textContent=visible?'施設ピン：OFF':'施設ピン：ON';
+ pinsButton.setAttribute('aria-pressed',String(!visible));
+};
 const legendButton=document.createElement('button');legendButton.id='toggle-legend-window';legendButton.type='button';legendButton.textContent='凡例を表示';legendButton.setAttribute('aria-expanded','false');controls.querySelector('.group-display').append(legendButton);
 legendButton.onclick=()=>{const hidden=document.querySelector('.map-overlay').classList.toggle('legend-hidden');legendButton.textContent=hidden?'凡例を表示':'凡例を閉じる';legendButton.setAttribute('aria-expanded',String(!hidden))};
 setTimeout(()=>map.invalidateSize(),0);
