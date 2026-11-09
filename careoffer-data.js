@@ -10,12 +10,23 @@ if(typeof L.maplibreGL==='function'){
  vectorMap.on('load',()=>{
   // Suppress English/romanized fallback labels. Only source Japanese names display.
   for(const layer of vectorMap.getStyle()?.layers||[]){
+   // Google Maps-like subdued gray roads, keeping parks, water and rail lines intact.
+   if(layer.type==='line'&&layer['source-layer']==='transportation'&&!/rail|ferry|water|path|foot|cycle|trail/i.test(layer.id)){
+    const id=layer.id.toLowerCase();
+    const major=/motorway|trunk|expressway/.test(id);
+    const arterial=/primary|secondary|tertiary/.test(id);
+    const casing=/casing|outline|border/.test(id);
+    const roadColor=major?(casing?'#8d9dab':'#a6b6c4'):arterial?(casing?'#bac5ce':'#d0d9e0'):(casing?'#cfd7dc':'#e1e6e9');
+    try{vectorMap.setPaintProperty(layer.id,'line-color',roadColor)}catch(error){console.info('道路色の変更を省略しました',layer.id,error.message)}
+   }
    // Railway station names should remain useful at wider map scales.
    // This only targets station-specific symbol layers, not bus-stop or road labels.
    if(layer.type==='symbol'&&/railway.?station|train.?station|subway.?station|rail.?station|station.?label/i.test(layer.id)){
     try{
-     vectorMap.setLayerZoomRange(layer.id,Math.min(layer.minzoom??9,9),layer.maxzoom??24);
+     vectorMap.setLayerZoomRange(layer.id,Math.min(layer.minzoom??8,8),layer.maxzoom??24);
      vectorMap.setLayoutProperty(layer.id,'text-size',['interpolate',['linear'],['zoom'],9,13,12,16,16,19]);
+     vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],['get','name'],'']);
+     vectorMap.setLayoutProperty(layer.id,'text-allow-overlap',true);
      vectorMap.setPaintProperty(layer.id,'text-halo-color','#ffffff');
      vectorMap.setPaintProperty(layer.id,'text-halo-width',2);
      vectorMap.setPaintProperty(layer.id,'text-color','#153952');
@@ -40,7 +51,7 @@ if(typeof L.maplibreGL==='function'){
    }
    if(layer.type!=='symbol'||!layer.layout?.['text-field'])continue;
    // Keep road-number shields and route references as numerals.
-   if(/shield|route.?number|highway.?number|junction/i.test(layer.id))continue;
+   if(/shield|route.?number|highway.?number|junction|railway.?station|train.?station|subway.?station|rail.?station|station.?label/i.test(layer.id))continue;
    // Local-language names are often populated even when name:ja is missing.
    // This retains more neighbourhood names without reverting to Latin labels.
    try{vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],'']);}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
@@ -50,9 +61,9 @@ if(typeof L.maplibreGL==='function'){
   const poiLayer=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='symbol'&&l['source-layer']==='poi');
   if(poiLayer){
    try{
-    vectorMap.addLayer({id:'tokuyo-rail-station-names',type:'symbol',source:poiLayer.source,'source-layer':'poi',minzoom:8,maxzoom:12.5,
-     filter:['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt']],
-     layout:{'text-field':['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],''],'text-font':poiLayer.layout?.['text-font']||['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],8,12,12,16],'text-anchor':'top','text-offset':[0,0.3]},
+    vectorMap.addLayer({id:'tokuyo-rail-station-names',type:'symbol',source:poiLayer.source,'source-layer':'poi',minzoom:7.5,maxzoom:13,
+     filter:['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt'],['==',['get','class'],'railway']],
+     layout:{'text-field':['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],['get','name'],''],'text-font':poiLayer.layout?.['text-font']||['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],8,13,12,17],'text-allow-overlap':true,'text-anchor':'top','text-offset':[0,0.3]},
      paint:{'text-color':'#153952','text-halo-color':'#ffffff','text-halo-width':2}});
    }catch(error){console.info('広域用の駅名レイヤーを追加できませんでした',error.message)}
   }
