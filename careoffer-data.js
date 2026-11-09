@@ -63,6 +63,18 @@ if(typeof L.maplibreGL==='function'){
    if(layer['source-layer']==='poi')labelExpression=['case',['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt']], '',labelExpression];
    try{vectorMap.setLayoutProperty(layer.id,'text-field',labelExpression)}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
   }
+  // Draw train tracks as a light rail bed with dark repeated ties, distinctly
+  // different from the gray roads. Keep tracks underneath place-name labels.
+  const transportationLayer=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='line'&&l['source-layer']==='transportation');
+  if(transportationLayer){
+   try{
+    const before=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='symbol')?.id;
+    const railwayFilter=['in',['get','class'],['literal',['rail','transit']]];
+    const railWidth=['interpolate',['linear'],['zoom'],9,1.6,13,2.8,17,4];
+    vectorMap.addLayer({id:'tokuyo-rail-bed',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#f8f9fa','line-width':['+',railWidth,1.2]}},before);
+    vectorMap.addLayer({id:'tokuyo-rail-ties',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#56616c','line-width':railWidth,'line-dasharray':[1.2,1.6]}},before);
+   }catch(error){console.info('鉄道路線の模様を変更できませんでした',error.message)}
+  }
  });
 }else activeBase=fallbackMap().addTo(map);
 // Show every facility marker separately. Do not replace nearby pins with count bubbles.
@@ -281,6 +293,7 @@ pinsButton.onclick=()=>{
  pinsButton.setAttribute('aria-pressed',String(!visible));
 };
 const legendButton=document.createElement('button');legendButton.id='toggle-legend-window';legendButton.type='button';legendButton.textContent='凡例を表示';legendButton.setAttribute('aria-expanded','false');controls.querySelector('.group-display').append(legendButton);
+controls.querySelector('.group-display').insertBefore(legendButton,pinsButton);
 legendButton.onclick=()=>{const hidden=document.querySelector('.map-overlay').classList.toggle('legend-hidden');legendButton.textContent=hidden?'凡例を表示':'凡例を閉じる';legendButton.setAttribute('aria-expanded',String(!hidden))};
 setTimeout(()=>map.invalidateSize(),0);
 const nameButton=document.createElement('button');nameButton.id='toggle-names';nameButton.type='button';nameButton.textContent='施設名：ON';nameButton.setAttribute('aria-pressed','true');controls.querySelector('.group-display').append(nameButton);
