@@ -1,16 +1,27 @@
 /* Chiba facilities: MHLW open data, 2026-06-30. */
 map.eachLayer(layer=>{if(layer instanceof L.TileLayer)map.removeLayer(layer)});
-const baseMaps={
-  japan:L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>',minZoom:5,maxZoom:18,maxNativeZoom:18}),
-  light:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri, HERE, Garmin, OpenStreetMap contributors',maxZoom:16}),
-  streets:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri, HERE, Garmin, OpenStreetMap contributors',maxZoom:18})
-};
-let activeBase=baseMaps.japan.addTo(map);
+// OpenFreeMap Bright is a modern road map with clear water, green spaces and roads.
+// MapLibre renders its vector tiles inside Leaflet, preserving existing markers.
+const fallbackMap=()=>L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>',minZoom:5,maxZoom:18});
+let activeBase;
+if(typeof L.maplibreGL==='function'){
+ activeBase=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/bright',interactive:false}).addTo(map);
+ const vectorMap=activeBase.getMaplibreMap();
+ vectorMap.on('load',()=>{
+  // Suppress English/romanized fallback labels. Only source Japanese names display.
+  for(const layer of vectorMap.getStyle()?.layers||[]){
+   if(layer.type!=='symbol'||!layer.layout?.['text-field'])continue;
+   // Keep road-number shields and route references as numerals.
+   if(/shield|route.?number|highway.?number|junction/i.test(layer.id))continue;
+   try{vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],'']);}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
+  }
+ });
+}else activeBase=fallbackMap().addTo(map);
 // Show every facility marker separately. Do not replace nearby pins with count bubbles.
 map.removeLayer(markers);markers=L.layerGroup().addTo(map);
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
-document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：国土地理院';
+document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：OpenFreeMap・OpenStreetMap';
 document.querySelector('.sub').remove();
 document.querySelector('.notice').remove();
 const style=document.createElement('style');style.textContent=`.map-wrap #map{background:#edf4ed}.leaflet-container{font-family:inherit}.map-overlay{border:1px solid #e6eae5;box-shadow:0 5px 18px #244b3515}.pin{width:36px;height:40px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);border-radius:11px 11px 2px 2px;font-size:12px}.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(28,122,87,.18)}.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#177a5a;color:white;font-weight:800}.facility{transition:background .15s}.facility:hover{background:#eef7f1}.map-loading{position:absolute;z-index:900;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#38614f;border:1px solid #dde8e0;border-radius:100px;padding:10px 18px;font-size:12px;box-shadow:0 3px 12px #2345}.app.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}.app.sidebar-hidden .side{visibility:hidden;overflow:hidden}.map-controls{position:absolute;z-index:850;top:16px;left:16px;display:flex;gap:8px}.map-controls button{border:1px solid #dbe4df;box-shadow:0 3px 14px #243a3121;background:#fff;border-radius:10px;padding:10px 12px;color:#244f40;font-weight:700;font-size:13px;cursor:pointer}.map-controls button:hover{background:#f3f8f4}.leaflet-tile-pane{filter:contrast(.92) brightness(1.04)}@media(max-width:750px){.app.sidebar-hidden{grid-template-rows:100dvh 0;grid-template-columns:1fr}.app.sidebar-hidden .side{display:none}.map-controls{top:9px;left:9px}}`;
@@ -68,7 +79,7 @@ document.querySelector('.side .footer').before(historyPanel);
 // Facility names and counts remain available on the map; the long sidebar list is not used.
 document.querySelector('.side .count').remove();
 document.querySelector('.side .results').remove();
-// Japanese-only GSI labels and stronger road contrast. No CSS bleaching of map tiles.
+// High-contrast road style without washed-out CSS filters.
 style.textContent+=`.map-wrap #map{background:#f6f9fb}.leaflet-tile-pane{filter:none!important}.side{background:#fcfefd}.top{padding-bottom:16px}`;
 const dateInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));
 const timeInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(new Date(iso));
@@ -127,12 +138,13 @@ async function refreshPublicOfficialData(){
   if(!rows[0]?.startsWith('事業所番号,サービスコード,公表日時,取得日時'))throw Error('CSV形式が異なります');
   const official=new Map(),syncEntries=[];
   for(const line of rows.slice(1)){
-   const [id,code,date,checkedAt,types,,status,,waiting,waitingStatus]=line.split(',');
+   const [id,code,date,checkedAt,types,,status,,waiting,waitingStatus,capacity,capacityStatus]=line.split(',');
    if(!/^\d{10}$/.test(id)||!/^\d{3}$/.test(code))continue;
    const update={};
    if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date||''))update.publishedAt=date;
    if(status==='確認済み'&&types&&types.split('|').every(t=>['unit','private','shared'].includes(t)))update.roomTypes=types.split('|');
    if(waitingStatus==='確認済み'&&/^\d+$/.test(waiting||''))update.wait=Number(waiting);
+   if(capacityStatus==='確認済み'&&/^\d+$/.test(capacity||'')&&Number(capacity)>0)update.capacity=Number(capacity);
    if(Object.keys(update).length)official.set(id+':'+code,update);
    if(Number.isFinite(Date.parse(checkedAt)))syncEntries.push({id,serviceCode:code,checkedAt,status:status||'取得済み'});
   }
@@ -171,15 +183,6 @@ style.textContent+='.map-overlay.legend-hidden{display:none}';
 document.getElementById('waiting').remove();
 document.querySelector('.top .filters').style.gridTemplateColumns='1fr';
 const controls=document.createElement('div');controls.className='map-controls filter-toolbar';controls.setAttribute('aria-label','地図の表示と施設の絞り込み');controls.innerHTML='<div class="toolbar-group group-display"><span class="toolbar-heading">表示設定</span><button id="toggle-sidebar" type="button" aria-expanded="true">☰ 設定を閉じる</button></div>';document.querySelector('.map-wrap').append(controls);
-const basemapButton=document.createElement('button');basemapButton.id='toggle-basemap';basemapButton.type='button';basemapButton.textContent='地図：日本語';basemapButton.title='日本語の標準地図と従来の地図を切り替え';controls.querySelector('.group-display').append(basemapButton);
-basemapButton.onclick=()=>{
- const useEsri=activeBase===baseMaps.japan;
- map.removeLayer(activeBase);
- activeBase=(useEsri?baseMaps.streets:baseMaps.japan).addTo(map);
- activeBase.bringToBack();
- basemapButton.textContent=useEsri?'地図：従来':'地図：日本語';
- document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：'+(useEsri?'Esri':'国土地理院');
-};
 document.querySelector('.app').classList.add('sidebar-hidden');
 const sidebarButton=document.getElementById('toggle-sidebar');sidebarButton.textContent='☰ 設定を開く';sidebarButton.setAttribute('aria-expanded','false');
 const legendButton=document.createElement('button');legendButton.id='toggle-legend-window';legendButton.type='button';legendButton.textContent='凡例を表示';legendButton.setAttribute('aria-expanded','false');controls.querySelector('.group-display').append(legendButton);
@@ -188,7 +191,7 @@ setTimeout(()=>map.invalidateSize(),0);
 const nameButton=document.createElement('button');nameButton.id='toggle-names';nameButton.type='button';nameButton.textContent='施設名：ON';nameButton.setAttribute('aria-pressed','true');controls.querySelector('.group-display').append(nameButton);
 const roomBadgeButton=document.createElement('button');roomBadgeButton.id='toggle-room-badges';roomBadgeButton.type='button';roomBadgeButton.textContent='居室バッジ：ON';roomBadgeButton.setAttribute('aria-pressed','true');controls.querySelector('.group-display').append(roomBadgeButton);
 roomBadgeButton.onclick=()=>{const hidden=document.querySelector('.map-wrap').classList.toggle('room-icons-hidden');roomBadgeButton.textContent=hidden?'居室バッジ：OFF':'居室バッジ：ON';roomBadgeButton.setAttribute('aria-pressed',String(!hidden))};
-const filterBar=document.createElement('div');filterBar.className='toolbar-filters';filterBar.innerHTML='<div class="toolbar-group group-room"><span class="toolbar-heading">居室タイプ</span><button class="room-badge" type="button" data-room="unit" aria-label="ユニット型個室" title="ユニット型個室" aria-pressed="false">ユ</button><button class="room-badge" type="button" data-room="private" aria-label="従来型個室" title="従来型個室" aria-pressed="false">個</button><button class="room-badge" type="button" data-room="shared" aria-label="従来型多床室" title="従来型多床室" aria-pressed="false">多</button></div><div class="toolbar-group group-region"><span class="toolbar-heading">施設区分</span><button type="button" data-regional="true" aria-pressed="false">地域密着型のみ</button></div><div class="toolbar-group group-wait"><span class="toolbar-heading">待機人数</span><button type="button" data-wait="low" aria-pressed="false">1〜30人</button><button type="button" data-wait="mid" aria-pressed="false">31〜60人</button><button type="button" data-wait="high" aria-pressed="false">61〜100人</button><button type="button" data-wait="higher" aria-pressed="false">101〜150人</button><button type="button" data-wait="highest" aria-pressed="false">151人以上</button><button type="button" data-wait="unknown" aria-pressed="false">不明</button></div><div class="toolbar-group group-date"><span class="toolbar-heading">厚労省 公表日時</span><button type="button" data-date="recent" aria-pressed="false">3か月以内</button><button type="button" data-date="half" aria-pressed="false">3〜6か月</button><button type="button" data-date="year" aria-pressed="false">6か月〜1年</button><button type="button" data-date="old" aria-pressed="false">1年以上</button><button type="button" data-date="unknown" aria-pressed="false">未取得</button></div><button type="button" id="clear-filters">絞り込み解除</button><span class="filter-count" id="filtered-facility-count" role="status" aria-live="polite">該当 —施設</span>';controls.append(filterBar);
+const filterBar=document.createElement('div');filterBar.className='toolbar-filters';filterBar.innerHTML='<div class="toolbar-group group-room"><span class="toolbar-heading">居室タイプ</span><button class="room-badge" type="button" data-room="unit" aria-label="ユニット型個室" title="ユニット型個室" aria-pressed="false">ユ</button><button class="room-badge" type="button" data-room="private" aria-label="従来型個室" title="従来型個室" aria-pressed="false">個</button><button class="room-badge" type="button" data-room="shared" aria-label="従来型多床室" title="従来型多床室" aria-pressed="false">多</button></div><div class="toolbar-group group-region"><span class="toolbar-heading">施設区分</span><button type="button" data-regional="true" aria-pressed="false">地域密着型のみ</button></div><div class="toolbar-group group-wait"><span class="toolbar-heading">待機人数</span><button type="button" data-wait="low" aria-pressed="false">1〜30人</button><button type="button" data-wait="mid" aria-pressed="false">31〜60人</button><button type="button" data-wait="high" aria-pressed="false">61〜100人</button><button type="button" data-wait="higher" aria-pressed="false">101〜150人</button><button type="button" data-wait="highest" aria-pressed="false">151人以上</button><button type="button" data-wait="unknown" aria-pressed="false">不明</button></div><div class="toolbar-group group-date"><span class="toolbar-heading">厚労省 公表日時</span><button type="button" data-date="recent" aria-pressed="false">3か月以内</button><button type="button" data-date="half" aria-pressed="false">3〜6か月</button><button type="button" data-date="year" aria-pressed="false">6か月〜1年</button><button type="button" data-date="old" aria-pressed="false">1年以上</button><button type="button" data-date="unknown" aria-pressed="false">未取得</button></div><span class="filter-count" id="filtered-facility-count" role="status" aria-live="polite">該当 —施設</span>';controls.append(filterBar);
 const selectedRooms=new Set(),selectedWaits=new Set(),selectedDates=new Set();let regionalOnly=false;
 function dateBucket(value){
  const date=/^(\d{4})-(\d{2})-(\d{2})/.exec(value||'');
@@ -203,7 +206,7 @@ function dateBucket(value){
  return 'old';
 }
 function refreshFilters(){filterBar.querySelectorAll('[data-room]').forEach(b=>{const active=selectedRooms.has(b.dataset.room);b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active))});filterBar.querySelectorAll('[data-wait]').forEach(b=>{const active=selectedWaits.has(b.dataset.wait);b.classList.toggle('wait-active',active);b.setAttribute('aria-pressed',String(active))});filterBar.querySelectorAll('[data-date]').forEach(b=>{const active=selectedDates.has(b.dataset.date);b.classList.toggle('date-active',active);b.setAttribute('aria-pressed',String(active))});const regional=filterBar.querySelector('[data-regional]');regional.classList.toggle('region-active',regionalOnly);regional.setAttribute('aria-pressed',String(regionalOnly))}
-filterBar.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.dataset.room){const value=button.dataset.room;selectedRooms.has(value)?selectedRooms.delete(value):selectedRooms.add(value)}else if(button.dataset.wait){const value=button.dataset.wait;selectedWaits.has(value)?selectedWaits.delete(value):selectedWaits.add(value)}else if(button.dataset.date){const value=button.dataset.date;selectedDates.has(value)?selectedDates.delete(value):selectedDates.add(value)}else if(button.dataset.regional){regionalOnly=!regionalOnly}else if(button.id==='clear-filters'){selectedRooms.clear();selectedWaits.clear();selectedDates.clear();regionalOnly=false}else return;refreshFilters();draw()});
+filterBar.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.dataset.room){const value=button.dataset.room;selectedRooms.has(value)?selectedRooms.delete(value):selectedRooms.add(value)}else if(button.dataset.wait){const value=button.dataset.wait;selectedWaits.has(value)?selectedWaits.delete(value):selectedWaits.add(value)}else if(button.dataset.date){const value=button.dataset.date;selectedDates.has(value)?selectedDates.delete(value):selectedDates.add(value)}else if(button.dataset.regional){regionalOnly=!regionalOnly}else return;refreshFilters();draw()});
 let namesEnabled=true;
 function updateLabelVisibility(){document.querySelector('.map-wrap').classList.toggle('labels-visible',namesEnabled&&map.getZoom()>=13);nameButton.textContent=namesEnabled?'施設名：ON':'施設名：OFF'}
 nameButton.onclick=()=>{namesEnabled=!namesEnabled;nameButton.setAttribute('aria-pressed',String(namesEnabled));updateLabelVisibility()};
@@ -241,7 +244,7 @@ draw=function(fit=false){
   const waiting=f.wait==null?'不明':f.wait+'人';
   const detailURL=f.id&&/^\d{10}$/.test(f.id)?`https://www.kaigokensaku.mhlw.go.jp/12/index.php?action_kouhyou_detail_024_kani=true&JigyosyoCd=${f.id}-00&ServiceCd=${f.serviceCode||510}#title07`:'';
   const m=L.marker([f.lat,f.lng],{icon}).bindTooltip(`${esc(shortName)}｜待機 ${waiting}`,{direction:'top'})
-    .bindPopup(`<div class="popup"><h3>${esc(shortName)}</h3><p>${esc(f.address)}</p><p><b>待機人数：${waiting}</b></p><p>施設区分：${esc(f.type||'未登録')}</p><p><b>厚労省 公表日時：${f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得'}</b></p>${f.capacity?`<p>定員：${esc(f.capacity)}人</p>`:''}${f.phone?`<p>電話：${esc(f.phone)}</p>`:''}${detailURL?`<p><a href="${detailURL}" target="_blank" rel="noopener noreferrer">厚労省の施設詳細を確認 ↗</a></p>`:''}${f.website&&/^https?:\/\//.test(f.website)?`<p><a href="${esc(f.website)}" target="_blank" rel="noopener noreferrer">施設の公式サイト ↗</a></p>`:''}</div>`,{maxWidth:350});
+    .bindPopup(`<div class="popup"><h3>${esc(shortName)}</h3><p>${esc(f.address)}</p><p><b>待機人数：${waiting}</b></p><p>施設区分：${esc(f.type||'未登録')}</p><p><b>厚労省 公表日時：${f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得'}</b></p>${Number(f.capacity)>0?`<p>定員：${esc(f.capacity)}人</p>`:'<p>定員：未確認</p>'}${f.phone?`<p>電話：${esc(f.phone)}</p>`:''}${detailURL?`<p><a href="${detailURL}" target="_blank" rel="noopener noreferrer">厚労省の施設詳細を確認 ↗</a></p>`:''}${f.website&&/^https?:\/\//.test(f.website)?`<p><a href="${esc(f.website)}" target="_blank" rel="noopener noreferrer">施設の公式サイト ↗</a></p>`:''}</div>`,{maxWidth:350});
   placedMarkers.push({marker:m,original:L.latLng(f.lat,f.lng)});
   markers.addLayer(m);bounds.push([f.lat,f.lng]);
  }
