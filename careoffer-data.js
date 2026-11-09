@@ -64,6 +64,44 @@ if(typeof L.maplibreGL==='function'){
 }else activeBase=fallbackMap().addTo(map);
 // Show every facility marker separately. Do not replace nearby pins with count bubbles.
 map.removeLayer(markers);markers=L.layerGroup().addTo(map);
+// Wide-area rail labels from independent Japanese station coordinates.
+// The base map does not include minor stations at low zoom, so zoom rules alone
+// cannot make their names appear. Keep this overlay below facility markers.
+const railwayPane=map.createPane('tokuyoRailwayLabels');railwayPane.style.zIndex='550';railwayPane.style.pointerEvents='none';
+const railwayLabels=L.layerGroup().addTo(map);
+const stationStyle=document.createElement('style');stationStyle.textContent='.tokuyo-station-label{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:max-content;transform:translate(-50%,-50%);font:800 13px/1.3 sans-serif;color:#23455f;text-shadow:-1px -1px 2px #fff,1px 1px 2px #fff,0 0 4px #fff;pointer-events:none}.tokuyo-station-label:before{content:"";display:inline-block;width:7px;height:7px;border:2px solid #fff;border-radius:2px;background:#2864a0;box-shadow:0 0 0 1px #2864a0}.tokuyo-station-label.important{font-size:15px;color:#173e62}';document.head.append(stationStyle);
+let railwayStationData=[];
+function updateRailwayLabels(){
+ railwayLabels.clearLayers();const zoom=map.getZoom();
+ if(zoom<8||zoom>=14||!railwayStationData.length)return;
+ const b=map.getBounds().pad(.1),minGap=zoom<10?115:zoom<12?85:65;
+ const boxes=[];
+ const major=/^(柏|北柏|南柏|新柏|流山おおたかの森|南流山|新松戸|松戸|我孫子|北小金|初石|豊四季|流山セントラルパーク)$/;
+ const visible=railwayStationData.filter(s=>b.contains([s.lat,s.lon])).sort((a,c)=>Number(major.test(c.name))-Number(major.test(a.name))||a.name.localeCompare(c.name,'ja'));
+ for(const s of visible){
+  const pt=map.latLngToContainerPoint([s.lat,s.lon]);
+  if(boxes.some(p=>Math.abs(pt.x-p.x)<minGap&&Math.abs(pt.y-p.y)<Math.max(28,minGap*.42)))continue;
+  boxes.push(pt);
+  const label=s.name.endsWith('駅')?s.name:`${s.name}駅`;
+  const node=L.divIcon({className:'',html:`<span class="tokuyo-station-label${major.test(s.name)?' important':''}">${esc(label)}</span>`,iconSize:[0,0],iconAnchor:[0,0]});
+  railwayLabels.addLayer(L.marker([s.lat,s.lon],{icon:node,pane:'tokuyoRailwayLabels',interactive:false,keyboard:false}));
+ }
+}
+map.on('moveend zoomend',updateRailwayLabels);
+fetch('https://raw.githubusercontent.com/piuccio/open-data-jp-railway-stations/master/stations.json',{cache:'force-cache'}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.json()}).then(data=>{
+ const found=[],seen=new Set(),stack=[data];let inspected=0;
+ while(stack.length&&inspected++<100000){
+  const item=stack.pop();if(!item||typeof item!=='object')continue;
+  if(Array.isArray(item)){for(const child of item)stack.push(child);continue}
+  const lat=Number(item.lat),lon=Number(item.lon),name=item.name_kanji;
+  if(typeof name==='string'&&name.trim()&&Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=34.5&&lat<=36.5&&lon>=138.9&&lon<=141.3){
+   const k=`${name}:${lat.toFixed(3)}:${lon.toFixed(3)}`;
+   if(!seen.has(k)){seen.add(k);found.push({name:name.trim(),lat,lon})}
+  }
+  for(const value of Object.values(item))if(value&&typeof value==='object')stack.push(value);
+ }
+ railwayStationData=found;updateRailwayLabels();
+}).catch(error=>console.info('広域用の駅名データを読み込めませんでした',error.message));
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
 document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：OpenFreeMap・OpenStreetMap';
