@@ -14,7 +14,7 @@ if(typeof L.maplibreGL==='function'){
    // Leave city, rail station, street and facility layers at their original zoom levels.
    if(layer.type==='symbol'&&layer['source-layer']==='place'&&/suburb|neighbou?rhood|quarter|district/i.test(layer.id)){
     try{
-     const lower=Math.min(layer.minzoom??10.5,10.5);
+     const lower=Math.min(layer.minzoom??9.5,9.5);
      vectorMap.setLayerZoomRange(layer.id,lower,layer.maxzoom??24);
     }catch(error){console.info('町名の表示縮尺を変更できませんでした',layer.id,error.message)}
    }
