@@ -10,8 +10,8 @@ map.removeLayer(markers);markers=L.layerGroup().addTo(map);
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
 document.querySelector('.footer').textContent='出典：厚生労働省「介護サービス情報公表システム」2026年6月末時点 ／ 地図：Esri';
-document.querySelector('.sub').textContent='千葉県全域｜厚労省の公表施設データ';
-document.querySelector('.notice').innerHTML='施設名・住所・位置は厚労省の公式データです。待機人数は一部の施設のみCareOffer掲載値を併記しています。<b>「不明」は0人ではありません。</b>';
+document.querySelector('.sub').remove();
+document.querySelector('.notice').remove();
 const style=document.createElement('style');style.textContent=`.map-wrap #map{background:#edf4ed}.leaflet-container{font-family:inherit}.map-overlay{border:1px solid #e6eae5;box-shadow:0 5px 18px #244b3515}.pin{width:36px;height:40px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);border-radius:11px 11px 2px 2px;font-size:12px}.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(28,122,87,.18)}.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#177a5a;color:white;font-weight:800}.facility{transition:background .15s}.facility:hover{background:#eef7f1}.map-loading{position:absolute;z-index:900;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#38614f;border:1px solid #dde8e0;border-radius:100px;padding:10px 18px;font-size:12px;box-shadow:0 3px 12px #2345}.app.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}.app.sidebar-hidden .side{visibility:hidden;overflow:hidden}.map-controls{position:absolute;z-index:850;top:16px;left:16px;display:flex;gap:8px}.map-controls button{border:1px solid #dbe4df;box-shadow:0 3px 14px #243a3121;background:#fff;border-radius:10px;padding:10px 12px;color:#244f40;font-weight:700;font-size:13px;cursor:pointer}.map-controls button:hover{background:#f3f8f4}.leaflet-tile-pane{filter:contrast(.92) brightness(1.04)}@media(max-width:750px){.app.sidebar-hidden{grid-template-rows:100dvh 0;grid-template-columns:1fr}.app.sidebar-hidden .side{display:none}.map-controls{top:9px;left:9px}}`;
 document.head.append(style);
 style.textContent+=`.pin-label{display:none;position:absolute;top:43px;left:50%;transform:translateX(-50%);white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:700;color:#263c32;background:#f2f5f3;border:2px solid #84968a;padding:3px 7px;border-radius:6px;box-shadow:0 2px 7px #1b3c2826;pointer-events:none}.pin-label.low{background:#e4f6ec;border-color:#15976a;color:#116745}.pin-label.mid{background:#e3efff;border-color:#2866bd;color:#174785}.pin-label.high{background:#fff0d9;border-color:#ed8b24;color:#91500c}.pin-label.higher{background:#fce8e3;border-color:#dc6654;color:#8f302e}.pin-label.highest{background:#f4e3eb;border-color:#a84471;color:#76264e}.pin-label.unknown{background:#edf1ee;border-color:#84968a;color:#4c6156}.pin.mid{background:#2866bd}.pin.high{background:#ed8b24}.pin.higher{background:#dc6654}.pin.highest{background:#a84471}.regional-frame{position:absolute;top:-5px;left:-5px;width:46px;height:50px;padding:5px;background:#2445c2;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);filter:drop-shadow(0 0 4px #2445c2)}.regional-frame .pin{border:0}.pin-label.regional-label{box-shadow:inset 4px 0 #2445c2,0 2px 7px #1b3c2826}.map-wrap.labels-visible .pin-label{display:block}.leaflet-marker-icon{overflow:visible!important}.map-controls{flex-wrap:wrap;max-width:calc(100% - 28px)}.map-overlay{max-width:min(380px,calc(100% - 18px))}.map-overlay .legend{max-width:340px}.map-overlay .legend-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.map-overlay .legend-toggle{border:1px solid #cbd9d3;border-radius:7px;background:#f8fbf9;color:#285642;font-weight:700;font-size:12px;padding:4px 8px;cursor:pointer}.map-overlay.is-collapsed .legend-content{display:none}`;
@@ -20,7 +20,7 @@ style.textContent+=`.regional-frame{background:#ffed00}.pin-label.regional-label
 style.textContent+='.map-wrap.room-icons-hidden .room-icons{display:none!important}';
 style.textContent+=`.address-search{margin:0 0 13px;padding:11px 12px;background:#fff5f3;border:1px solid #ffd8d3;border-radius:11px}.address-search label{display:block;font-size:12px;font-weight:800;color:#9b302f;margin-bottom:7px}.address-search .address-actions{display:flex;gap:6px;margin-top:6px}.address-search .address-actions button{border:0;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;font-weight:750}.address-search .address-actions .find-home{background:#dc4146;color:#fff;flex:1}.address-search .address-actions .clear-home{background:#fff;border:1px solid #f0c2bd;color:#8a4a46}.address-search .address-help,.address-search .address-result{font-size:11px;line-height:1.5;color:#916b66;margin:6px 0 0}.home-pin{width:36px;height:36px;border:3px solid #fff;border-radius:50%;background:#e53c43;display:grid;place-items:center;box-shadow:0 2px 9px #8e273b80}.home-pin svg{width:22px;height:22px;fill:#fff}.facility-memo{margin-top:12px;padding-top:10px;border-top:1px solid #e0e8e3}.facility-memo label{display:block;font-size:12px;font-weight:800;color:#355e49;margin-bottom:5px}.facility-memo textarea{width:100%;min-height:82px;resize:vertical;border:1px solid #bfd3c6;border-radius:7px;padding:8px;font:13px/1.5 inherit;box-sizing:border-box}.facility-memo small{color:#708078;font-size:11px}`;
 const addressBox=document.createElement('form');addressBox.className='address-search';addressBox.innerHTML='<label for="client-address">🏠 住所にピンを立てる</label><input id="client-address" type="text" placeholder="例：千葉県柏市末広町1-1" autocomplete="off"><div class="address-actions"><button class="find-home" type="submit">表示</button><button class="clear-home" type="button" id="clear-client-address">ピンを消す</button></div><p class="address-result" role="status" id="address-result"></p>';
-document.querySelector('.top .notice').insertAdjacentElement('afterend',addressBox);
+document.querySelector('.top h1').insertAdjacentElement('afterend',addressBox);
 let homeMarker=null;
 const homeIcon=L.divIcon({className:'',html:'<div class="home-pin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 10.5l1.5 1.8L5 11v10h6v-6h3v6h6V11l1.5 1.3 1.5-1.8L12 2z"/></svg></div>',iconSize:[36,36],iconAnchor:[18,18]});
 addressBox.addEventListener('submit',async event=>{
@@ -60,6 +60,43 @@ const publicationKey='chiba-tokuyo-publication-dates-v1',roomKey='chiba-tokuyo-r
 // Only aggregated official facility records are published in this separate public repository.
 const publicOfficialCsv='https://raw.githubusercontent.com/royalaihoshi-tech/chiba-tokuyo-public-data/main/publication-dates.csv';
 const publicNewFacilities='https://raw.githubusercontent.com/royalaihoshi-tech/chiba-tokuyo-public-data/main/new-facilities.json';
+const publicSyncHistory='https://raw.githubusercontent.com/royalaihoshi-tech/chiba-tokuyo-public-data/main/sync-history.json';
+style.textContent+=`.sync-history{border-top:1px solid #e6eeea;background:#fafcfb;font-size:12px}.sync-history summary{cursor:pointer;list-style:none;padding:12px 20px;font-weight:800;color:#315c4a}.sync-history summary::-webkit-details-marker{display:none}.sync-history summary::after{content:' ＋';float:right}.sync-history[open] summary::after{content:' −'}.sync-history-body{max-height:32vh;overflow:auto;padding:0 15px 12px}.sync-history-day{margin:8px 0;padding:10px;background:#fff;border:1px solid #e2ebe6;border-radius:9px}.sync-history-day summary{padding:0;color:#315c4a}.sync-history-day summary::after{content:' ＋'}.sync-history-day[open] summary::after{content:' −'}.sync-history-day ul{margin:9px 0 0;padding-left:18px;line-height:1.75}.sync-history-note{color:#72857b;font-size:11px;line-height:1.6;margin:6px 2px 0}`;
+const historyPanel=document.createElement('details');historyPanel.className='sync-history';historyPanel.innerHTML='<summary>データ更新履歴</summary><div class="sync-history-body" id="sync-history-body"><p class="sync-history-note">データを確認中です…</p></div>';
+document.querySelector('.side .footer').before(historyPanel);
+const dateInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));
+const timeInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(new Date(iso));
+function renderSyncHistory(entries,persistent){
+ const container=document.getElementById('sync-history-body'),names=new Map(all.map(f=>[f.id+':'+f.serviceCode,displayFacilityName(f.name)])),days=new Map();
+ for(const entry of entries){
+  const timestamp=entry.checkedAt||entry.at||entry.date;
+  if(!timestamp||!Number.isFinite(Date.parse(timestamp)))continue;
+  const day=dateInJapan(timestamp),id=String(entry.id||''),code=String(entry.serviceCode||'');
+  if(!days.has(day))days.set(day,[]);
+  days.get(day).push({name:entry.name||names.get(id+':'+code)||id,time:timeInJapan(timestamp),status:entry.status||'確認済み'});
+ }
+ container.replaceChildren();
+ const note=document.createElement('p');note.className='sync-history-note';note.textContent=persistent?'収集ログに保存された取得履歴です。':'公開CSVに残っている各施設の最新取得日時から集計しています。過去の再取得履歴は含まれません。';container.append(note);
+ if(!days.size){const p=document.createElement('p');p.className='sync-history-note';p.textContent='取得日時の記録はまだありません。';container.append(p);return}
+ const sorted=[...days.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+ for(const [day,facilities] of sorted){
+  facilities.sort((a,b)=>a.time.localeCompare(b.time));
+  const group=document.createElement('details');group.className='sync-history-day';
+  const summary=document.createElement('summary');summary.textContent=`${day}　${facilities.length}施設`;
+  const list=document.createElement('ul');
+  for(const f of facilities){const li=document.createElement('li');li.textContent=`${f.time}　${f.name}${f.status==='確認済み'?'':`（${f.status}）`}`;list.append(li)}
+  group.append(summary,list);container.append(group);
+ }
+}
+async function refreshSyncHistory(fallbackEntries){
+ try{
+  const response=await fetch(publicSyncHistory+'?t='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw Error('履歴ファイル未公開');
+  const data=await response.json();
+  if(!Array.isArray(data.entries))throw Error('履歴ファイル形式エラー');
+  renderSyncHistory(data.entries,true);
+ }catch{renderSyncHistory(fallbackEntries,false)}
+}
 async function refreshNewFacilities(){
  try{
   const response=await fetch(publicNewFacilities+'?t='+Date.now(),{cache:'no-store'});
@@ -82,27 +119,21 @@ async function refreshPublicOfficialData(){
   if(!response.ok)throw Error('公開CSV未配置');
   const rows=(await response.text()).replace(/^\uFEFF/,'').trim().split(/\r?\n/);
   if(!rows[0]?.startsWith('事業所番号,サービスコード,公表日時,取得日時'))throw Error('CSV形式が異なります');
-  const official=new Map();
+  const official=new Map(),syncEntries=[];
   for(const line of rows.slice(1)){
-   const [id,code,date,,types,,status,,waiting,waitingStatus]=line.split(',');
+   const [id,code,date,checkedAt,types,,status,,waiting,waitingStatus]=line.split(',');
    if(!/^\d{10}$/.test(id)||!/^\d{3}$/.test(code))continue;
    const update={};
    if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(date||''))update.publishedAt=date;
    if(status==='確認済み'&&types&&types.split('|').every(t=>['unit','private','shared'].includes(t)))update.roomTypes=types.split('|');
    if(waitingStatus==='確認済み'&&/^\d+$/.test(waiting||''))update.wait=Number(waiting);
    if(Object.keys(update).length)official.set(id+':'+code,update);
+   if(Number.isFinite(Date.parse(checkedAt)))syncEntries.push({id,serviceCode:code,checkedAt,status:status||'取得済み'});
   }
   if(!official.size)return;
   all=all.map(f=>({...f,...official.get(f.id+':'+f.serviceCode)}));
   draw();
-  let syncStatus=document.getElementById('official-sync-status');
-  if(!syncStatus){
-   syncStatus=document.createElement('div');
-   syncStatus.id='official-sync-status';
-   syncStatus.style.cssText='margin-top:6px;font-size:12px;color:#146356;font-weight:700';
-   document.querySelector('.notice').append(syncStatus);
-  }
-  syncStatus.textContent='厚労省の公表日時・居室タイプ・待機人数：公式CSV '+official.size+'施設を自動同期済み';
+  await refreshSyncHistory(syncEntries);
  }catch(error){console.info('公式CSVの公開待ち。既存の施設データを表示します。',error.message)}
 }
 try{importedDates=JSON.parse(localStorage.getItem(publicationKey)||'{}')||{}}catch{importedDates={}}
@@ -211,6 +242,5 @@ const loading=document.createElement('div');loading.className='map-loading';load
 fetch('./facilities.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('施設一覧が取得できませんでした');return r.json()}).then(async data=>{
  all=data.facilities.filter(f=>Number.isFinite(f.lat)&&Number.isFinite(f.lng)).map(f=>({...f,wait:f.wait===0?null:f.wait,publishedAt:importedDates[`${f.id}:${f.serviceCode}`]||f.publishedAt,roomTypes:importedRooms[`${f.id}:${f.serviceCode}`]||f.roomTypes}));
  const known=all.filter(f=>f.wait!=null).length;
- document.querySelector('.notice').innerHTML=`厚労省の公式CSVに基づく全553施設のうち${all.length}施設を地図に表示。待機人数は${known}施設で確認済みです。<b>「不明」は0人ではありません。</b>`;
  populate();draw(true);loading.remove();await refreshNewFacilities();await refreshPublicOfficialData();
 }).catch(error=>{loading.textContent='データ読込エラー：再読み込みしてください';console.error(error)});
