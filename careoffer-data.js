@@ -55,9 +55,12 @@ if(typeof L.maplibreGL==='function'){
    // Local-language names are often populated even when name:ja is missing.
    // This retains more neighbourhood names without reverting to Latin labels.
    const japaneseNames=layer['source-layer']==='place'||layer['source-layer']==='transportation_name';
-   const labelExpression=japaneseNames
+   let labelExpression=japaneseNames
     ?['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],['get','name'],'']
     :['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],''];
+   // Railway names are drawn by our persistent station overlay. Avoid duplicate
+   // text from the POI layer while keeping its railway station symbols.
+   if(layer['source-layer']==='poi')labelExpression=['case',['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt']], '',labelExpression];
    try{vectorMap.setLayoutProperty(layer.id,'text-field',labelExpression)}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
   }
  });
@@ -73,7 +76,9 @@ const stationStyle=document.createElement('style');stationStyle.textContent='.to
 let railwayStationData=[];
 function updateRailwayLabels(){
  railwayLabels.clearLayers();const zoom=map.getZoom();
- if(zoom<8||zoom>=14||!railwayStationData.length)return;
+ // Keep labels visible at every detailed zoom, too. The original zoom>=14
+ // cutoff caused names to disappear before the basemap's labels appeared.
+ if(zoom<8||!railwayStationData.length)return;
  const b=map.getBounds().pad(.1),minGap=zoom<10?115:zoom<12?85:65;
  const boxes=[];
  const major=/^(柏|北柏|南柏|新柏|流山おおたかの森|南流山|新松戸|松戸|我孫子|北小金|初石|豊四季|流山セントラルパーク)$/;
