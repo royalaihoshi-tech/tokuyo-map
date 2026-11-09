@@ -10,10 +10,29 @@ if(typeof L.maplibreGL==='function'){
  vectorMap.on('load',()=>{
   // Suppress English/romanized fallback labels. Only source Japanese names display.
   for(const layer of vectorMap.getStyle()?.layers||[]){
+   // Show local district / neighbourhood names earlier when zooming out.
+   // Leave city, rail station, street and facility layers at their original zoom levels.
+   if(layer.type==='symbol'&&layer['source-layer']==='place'&&/suburb|neighbou?rhood|quarter|district/i.test(layer.id)){
+    try{
+     const lower=Math.min(layer.minzoom??10.5,10.5);
+     vectorMap.setLayerZoomRange(layer.id,lower,layer.maxzoom??24);
+    }catch(error){console.info('町名の表示縮尺を変更できませんでした',layer.id,error.message)}
+   }
+   // Bus stops clutter the map; keep railway stations and station names.
+   // Filter only POI symbol features, never the rail/transport layers.
+   if(layer.type==='symbol'&&layer['source-layer']==='poi'){
+    try{
+     const original=vectorMap.getFilter(layer.id);
+     const notBus=['all', ['!',['in',['get','class'],['literal',['bus','bus_stop','bus_station']]]], ['!',['in',['get','subclass'],['literal',['bus_stop','bus_station','bus_platform']]]]];
+     vectorMap.setFilter(layer.id,original?['all',original,notBus]:notBus);
+    }catch(error){console.info('バス停表示の調整を省略しました',layer.id,error.message)}
+   }
    if(layer.type!=='symbol'||!layer.layout?.['text-field'])continue;
    // Keep road-number shields and route references as numerals.
    if(/shield|route.?number|highway.?number|junction/i.test(layer.id))continue;
-   try{vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],'']);}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
+   // Local-language names are often populated even when name:ja is missing.
+   // This retains more neighbourhood names without reverting to Latin labels.
+   try{vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],'']);}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
   }
  });
 }else activeBase=fallbackMap().addTo(map);
