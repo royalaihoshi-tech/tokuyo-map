@@ -61,9 +61,15 @@ const publicationKey='chiba-tokuyo-publication-dates-v1',roomKey='chiba-tokuyo-r
 const publicOfficialCsv='https://raw.githubusercontent.com/royalaihoshi-tech/chiba-tokuyo-public-data/main/publication-dates.csv';
 const publicNewFacilities='https://raw.githubusercontent.com/royalaihoshi-tech/chiba-tokuyo-public-data/main/new-facilities.json';
 const publicSyncHistory='https://raw.githubusercontent.com/royalaihoshi-tech/chiba-tokuyo-public-data/main/sync-history.json';
-style.textContent+=`.sync-history{border-top:1px solid #e6eeea;background:#fafcfb;font-size:12px}.sync-history summary{cursor:pointer;list-style:none;padding:12px 20px;font-weight:800;color:#315c4a}.sync-history summary::-webkit-details-marker{display:none}.sync-history summary::after{content:' ＋';float:right}.sync-history[open] summary::after{content:' −'}.sync-history-body{max-height:32vh;overflow:auto;padding:0 15px 12px}.sync-history-day{margin:8px 0;padding:10px;background:#fff;border:1px solid #e2ebe6;border-radius:9px}.sync-history-day summary{padding:0;color:#315c4a}.sync-history-day summary::after{content:' ＋'}.sync-history-day[open] summary::after{content:' −'}.sync-history-day ul{margin:9px 0 0;padding-left:18px;line-height:1.75}.sync-history-note{color:#72857b;font-size:11px;line-height:1.6;margin:6px 2px 0}`;
+style.textContent+=`.sync-history{border-top:1px solid #e6eeea;background:#fafcfb;font-size:12px;margin-top:auto}.sync-history summary{cursor:pointer;list-style:none;padding:12px 20px;font-weight:800;color:#315c4a}.sync-history summary::-webkit-details-marker{display:none}.sync-history summary::after{content:' ＋';float:right}.sync-history[open] summary::after{content:' −'}.sync-history-body{max-height:32vh;overflow:auto;padding:0 15px 12px}.sync-history-day{margin:8px 0;padding:10px;background:#fff;border:1px solid #e2ebe6;border-radius:9px}.sync-history-day summary{padding:0;color:#315c4a}.sync-history-day summary::after{content:' ＋'}.sync-history-day[open] summary::after{content:' −'}.sync-history-day ul{margin:9px 0 0;padding-left:18px;line-height:1.75}.sync-history-note{color:#72857b;font-size:11px;line-height:1.6;margin:6px 2px 0}`;
 const historyPanel=document.createElement('details');historyPanel.className='sync-history';historyPanel.innerHTML='<summary>データ更新履歴</summary><div class="sync-history-body" id="sync-history-body"><p class="sync-history-note">データを確認中です…</p></div>';
 document.querySelector('.side .footer').before(historyPanel);
+// Facility names and counts remain available on the map; the long sidebar list is not used.
+document.querySelector('.side .count').remove();
+document.querySelector('.side .results').remove();
+// Brighter, cooler streets resembling a modern Google-style road map.
+// Reuse the existing Esri map tiles, without introducing a new provider or API key.
+style.textContent+=`.map-wrap #map{background:#f5fafb}.leaflet-tile-pane{filter:brightness(1.14) saturate(.83) contrast(.96)!important}.side{background:#fcfefd}.top{padding-bottom:16px}`;
 const dateInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));
 const timeInJapan=iso=>new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(new Date(iso));
 function renderSyncHistory(entries,persistent){
@@ -164,9 +170,9 @@ document.querySelector('.map-overlay').classList.add('legend-hidden');
 style.textContent+='.map-overlay.legend-hidden{display:none}';
 document.getElementById('waiting').remove();
 document.querySelector('.top .filters').style.gridTemplateColumns='1fr';
-const controls=document.createElement('div');controls.className='map-controls filter-toolbar';controls.setAttribute('aria-label','地図の表示と施設の絞り込み');controls.innerHTML='<div class="toolbar-group group-display"><span class="toolbar-heading">表示設定</span><button id="toggle-sidebar" type="button" aria-expanded="true">☰ 一覧を閉じる</button></div>';document.querySelector('.map-wrap').append(controls);
+const controls=document.createElement('div');controls.className='map-controls filter-toolbar';controls.setAttribute('aria-label','地図の表示と施設の絞り込み');controls.innerHTML='<div class="toolbar-group group-display"><span class="toolbar-heading">表示設定</span><button id="toggle-sidebar" type="button" aria-expanded="true">☰ 設定を閉じる</button></div>';document.querySelector('.map-wrap').append(controls);
 document.querySelector('.app').classList.add('sidebar-hidden');
-const sidebarButton=document.getElementById('toggle-sidebar');sidebarButton.textContent='☰ 一覧を開く';sidebarButton.setAttribute('aria-expanded','false');
+const sidebarButton=document.getElementById('toggle-sidebar');sidebarButton.textContent='☰ 設定を開く';sidebarButton.setAttribute('aria-expanded','false');
 const legendButton=document.createElement('button');legendButton.id='toggle-legend-window';legendButton.type='button';legendButton.textContent='凡例を表示';legendButton.setAttribute('aria-expanded','false');controls.querySelector('.group-display').append(legendButton);
 legendButton.onclick=()=>{const hidden=document.querySelector('.map-overlay').classList.toggle('legend-hidden');legendButton.textContent=hidden?'凡例を表示':'凡例を閉じる';legendButton.setAttribute('aria-expanded',String(!hidden))};
 setTimeout(()=>map.invalidateSize(),0);
@@ -193,7 +199,7 @@ let namesEnabled=true;
 function updateLabelVisibility(){document.querySelector('.map-wrap').classList.toggle('labels-visible',namesEnabled&&map.getZoom()>=13);nameButton.textContent=namesEnabled?'施設名：ON':'施設名：OFF'}
 nameButton.onclick=()=>{namesEnabled=!namesEnabled;nameButton.setAttribute('aria-pressed',String(namesEnabled));updateLabelVisibility()};
 map.on('zoomend',updateLabelVisibility);
-document.getElementById('toggle-sidebar').onclick=()=>{const hidden=document.querySelector('.app').classList.toggle('sidebar-hidden');const b=document.getElementById('toggle-sidebar');b.textContent=hidden?'☰ 一覧を開く':'☰ 一覧を閉じる';b.setAttribute('aria-expanded',String(!hidden));setTimeout(()=>map.invalidateSize(),240)};
+document.getElementById('toggle-sidebar').onclick=()=>{const hidden=document.querySelector('.app').classList.toggle('sidebar-hidden');const b=document.getElementById('toggle-sidebar');b.textContent=hidden?'☰ 設定を開く':'☰ 設定を閉じる';b.setAttribute('aria-expanded',String(!hidden));setTimeout(()=>map.invalidateSize(),240)};
 let placedMarkers=[];
 function repositionSharedMarkers(){
  const zoom=map.getZoom();
@@ -218,10 +224,7 @@ map.on('zoomend',repositionSharedMarkers);
 draw=function(fit=false){
  markers.clearLayers();placedMarkers=[];const q=$('q').value.toLowerCase(),city=$('city').value;
  const visible=all.filter(x=>(!q||(x.name+x.address).toLowerCase().includes(q))&&(!city||x.city===city)&&(!regionalOnly||x.type==='地域密着型特養')&&(!selectedRooms.size||(x.roomTypes||[]).some(type=>selectedRooms.has(type)))&&(!selectedWaits.size||selectedWaits.has(level(x.wait)))&&(!selectedDates.size||selectedDates.has(dateBucket(x.publishedAt))));
- const known=visible.filter(f=>f.wait!=null).length;
- $('count').textContent=`${visible.length}施設を表示 / 全${all.length}施設 · 待機人数確認${known}件`;
  document.getElementById('filtered-facility-count').textContent=`該当 ${visible.length}施設`;
- $('list').innerHTML=visible.length?'':'<div class="empty">条件に一致する施設はありません。</div>';
  const bounds=[];
  for(const f of visible){
   const shortName=displayFacilityName(f.name);
@@ -232,8 +235,6 @@ draw=function(fit=false){
     .bindPopup(`<div class="popup"><h3>${esc(shortName)}</h3><p>${esc(f.address)}</p><p><b>待機人数：${waiting}</b></p><p>施設区分：${esc(f.type||'未登録')}</p><p><b>厚労省 公表日時：${f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得'}</b></p>${f.capacity?`<p>定員：${esc(f.capacity)}人</p>`:''}${f.phone?`<p>電話：${esc(f.phone)}</p>`:''}${detailURL?`<p><a href="${detailURL}" target="_blank" rel="noopener noreferrer">厚労省の施設詳細を確認 ↗</a></p>`:''}${f.website&&/^https?:\/\//.test(f.website)?`<p><a href="${esc(f.website)}" target="_blank" rel="noopener noreferrer">施設の公式サイト ↗</a></p>`:''}</div>`,{maxWidth:350});
   placedMarkers.push({marker:m,original:L.latLng(f.lat,f.lng)});
   markers.addLayer(m);bounds.push([f.lat,f.lng]);
-  const el=document.createElement('article');el.className='facility';el.innerHTML=`<div class="name">${esc(shortName)}</div><div class="addr">${esc(f.address)}</div><div class="meta"><span class="pill ${cls==='unknown'?'unknown':''}">待機 ${waiting}</span><span>${esc(f.type||'')}</span></div>`;
-  el.onclick=()=>{map.setView([f.lat,f.lng],15);m.openPopup()};$('list').append(el)
  }
  repositionSharedMarkers();updateLabelVisibility();
  if(fit&&bounds.length)map.fitBounds(bounds,{padding:[35,35],maxZoom:12});
@@ -241,6 +242,5 @@ draw=function(fit=false){
 const loading=document.createElement('div');loading.className='map-loading';loading.textContent='千葉県の施設情報を読み込み中…';document.querySelector('.map-wrap').append(loading);
 fetch('./facilities.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('施設一覧が取得できませんでした');return r.json()}).then(async data=>{
  all=data.facilities.filter(f=>Number.isFinite(f.lat)&&Number.isFinite(f.lng)).map(f=>({...f,wait:f.wait===0?null:f.wait,publishedAt:importedDates[`${f.id}:${f.serviceCode}`]||f.publishedAt,roomTypes:importedRooms[`${f.id}:${f.serviceCode}`]||f.roomTypes}));
- const known=all.filter(f=>f.wait!=null).length;
  populate();draw(true);loading.remove();await refreshNewFacilities();await refreshPublicOfficialData();
 }).catch(error=>{loading.textContent='データ読込エラー：再読み込みしてください';console.error(error)});
