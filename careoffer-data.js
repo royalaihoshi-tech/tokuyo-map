@@ -10,6 +10,17 @@ if(typeof L.maplibreGL==='function'){
  vectorMap.on('load',()=>{
   // Suppress English/romanized fallback labels. Only source Japanese names display.
   for(const layer of vectorMap.getStyle()?.layers||[]){
+   // Railway station names should remain useful at wider map scales.
+   // This only targets station-specific symbol layers, not bus-stop or road labels.
+   if(layer.type==='symbol'&&/railway.?station|train.?station|subway.?station|rail.?station|station.?label/i.test(layer.id)){
+    try{
+     vectorMap.setLayerZoomRange(layer.id,Math.min(layer.minzoom??9,9),layer.maxzoom??24);
+     vectorMap.setLayoutProperty(layer.id,'text-size',['interpolate',['linear'],['zoom'],9,13,12,16,16,19]);
+     vectorMap.setPaintProperty(layer.id,'text-halo-color','#ffffff');
+     vectorMap.setPaintProperty(layer.id,'text-halo-width',2);
+     vectorMap.setPaintProperty(layer.id,'text-color','#153952');
+    }catch(error){console.info('駅名表示の調整を省略しました',layer.id,error.message)}
+   }
    // Show local district / neighbourhood names earlier when zooming out.
    // Leave city, rail station, street and facility layers at their original zoom levels.
    if(layer.type==='symbol'&&layer['source-layer']==='place'&&/suburb|neighbou?rhood|quarter|district/i.test(layer.id)){
@@ -33,6 +44,17 @@ if(typeof L.maplibreGL==='function'){
    // Local-language names are often populated even when name:ja is missing.
    // This retains more neighbourhood names without reverting to Latin labels.
    try{vectorMap.setLayoutProperty(layer.id,'text-field',['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],'']);}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
+  }
+  // Separate, Japanese-only railway station labels for wide zoom levels.
+  // Keep them independent of ordinary POI labels so bus stops stay hidden.
+  const poiLayer=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='symbol'&&l['source-layer']==='poi');
+  if(poiLayer){
+   try{
+    vectorMap.addLayer({id:'tokuyo-rail-station-names',type:'symbol',source:poiLayer.source,'source-layer':'poi',minzoom:8,maxzoom:12.5,
+     filter:['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt']],
+     layout:{'text-field':['coalesce',['get','name:ja'],['get','name_ja'],['get','name:nonlatin'],''],'text-font':poiLayer.layout?.['text-font']||['Noto Sans Regular'],'text-size':['interpolate',['linear'],['zoom'],8,12,12,16],'text-anchor':'top','text-offset':[0,0.3]},
+     paint:{'text-color':'#153952','text-halo-color':'#ffffff','text-halo-width':2}});
+   }catch(error){console.info('広域用の駅名レイヤーを追加できませんでした',error.message)}
   }
  });
 }else activeBase=fallbackMap().addTo(map);
