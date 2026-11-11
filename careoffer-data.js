@@ -72,7 +72,7 @@ if(typeof L.maplibreGL==='function'){
     const railwayFilter=['in',['get','class'],['literal',['rail','transit']]];
     const railWidth=['interpolate',['linear'],['zoom'],9,1.6,13,2.8,17,4];
     vectorMap.addLayer({id:'tokuyo-rail-bed',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#f8f9fa','line-width':['+',railWidth,1.2]}},before);
-    vectorMap.addLayer({id:'tokuyo-rail-ties',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#56616c','line-width':railWidth,'line-dasharray':[1.2,1.6]}},before);
+    vectorMap.addLayer({id:'tokuyo-rail-ties',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#87939e','line-width':railWidth,'line-dasharray':[2.4,2.2]}},before);
    }catch(error){console.info('鉄道路線の模様を変更できませんでした',error.message)}
   }
  });
