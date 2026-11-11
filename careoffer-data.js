@@ -68,19 +68,17 @@ if(typeof L.maplibreGL==='function'){
    if(layer['source-layer']==='poi')labelExpression=['case',['any',['==',['get','subclass'],'station'],['==',['get','subclass'],'halt']], '',labelExpression];
    try{vectorMap.setLayoutProperty(layer.id,'text-field',labelExpression)}catch(error){console.info('地名レイヤーを変更できませんでした',layer.id,error.message)}
   }
-  // Draw train tracks as a light rail bed with dark repeated ties, distinctly
-  // different from the gray roads. Keep tracks underneath place-name labels.
+  // Use a thin, quiet rail line at wide-area zooms: parallel rails otherwise
+  // merge into a conspicuous band. Reserve dashed tracks for detailed zooms.
   const transportationLayer=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='line'&&l['source-layer']==='transportation');
   if(transportationLayer){
    try{
     const before=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='symbol')?.id;
     const railwayFilter=['in',['get','class'],['literal',['rail','transit']]];
-    // Distant parallel tracks should stay separate instead of merging into a thick stripe.
-    // At detailed zooms (13+) retain the existing rail appearance.
-    const railWidth=['interpolate',['linear'],['zoom'],9,0.55,11,1.1,13,2.8,17,4];
-    const railBedPadding=['interpolate',['linear'],['zoom'],9,0.4,11,0.7,13,1.2];
-    vectorMap.addLayer({id:'tokuyo-rail-bed',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#f8f9fa','line-width':['+',railWidth,railBedPadding]}},before);
-    vectorMap.addLayer({id:'tokuyo-rail-ties',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#87939e','line-width':railWidth,'line-dasharray':[7,4]}},before);
+    const railWidth=['interpolate',['linear'],['zoom'],13,2.8,17,4];
+    vectorMap.addLayer({id:'tokuyo-rail-overview',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,minzoom:5,maxzoom:13,paint:{'line-color':'#9ba9b3','line-width':['interpolate',['linear'],['zoom'],9,0.35,12,0.65],'line-opacity':0.75}},before);
+    vectorMap.addLayer({id:'tokuyo-rail-bed',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,minzoom:13,paint:{'line-color':'#f8f9fa','line-width':['+',railWidth,1.2]}},before);
+    vectorMap.addLayer({id:'tokuyo-rail-ties',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,minzoom:13,paint:{'line-color':'#87939e','line-width':railWidth,'line-dasharray':[7,4]}},before);
    }catch(error){console.info('鉄道路線の模様を変更できませんでした',error.message)}
   }
  });
@@ -130,7 +128,7 @@ fetch('https://raw.githubusercontent.com/piuccio/open-data-jp-railway-stations/m
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
 document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：OpenFreeMap・OpenStreetMap';
-const versionLabel=document.createElement('div');versionLabel.textContent='バージョン：v1.0.0';versionLabel.style.marginTop='5px';document.querySelector('.footer').append(versionLabel);
+const versionLabel=document.createElement('div');versionLabel.textContent='バージョン：v1.0.1';versionLabel.style.marginTop='5px';document.querySelector('.footer').append(versionLabel);
 document.querySelector('.sub').remove();
 document.querySelector('.notice').remove();
 const style=document.createElement('style');style.textContent=`.map-wrap #map{background:#edf4ed}.leaflet-container{font-family:inherit}.map-overlay{border:1px solid #e6eae5;box-shadow:0 5px 18px #244b3515}.pin{width:36px;height:40px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);border-radius:11px 11px 2px 2px;font-size:12px}.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(28,122,87,.18)}.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#177a5a;color:white;font-weight:800}.facility{transition:background .15s}.facility:hover{background:#eef7f1}.map-loading{position:absolute;z-index:900;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#38614f;border:1px solid #dde8e0;border-radius:100px;padding:10px 18px;font-size:12px;box-shadow:0 3px 12px #2345}.app.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}.app.sidebar-hidden .side{visibility:hidden;overflow:hidden}.map-controls{position:absolute;z-index:850;top:16px;left:16px;display:flex;gap:8px}.map-controls button{border:1px solid #dbe4df;box-shadow:0 3px 14px #243a3121;background:#fff;border-radius:10px;padding:10px 12px;color:#244f40;font-weight:700;font-size:13px;cursor:pointer}.map-controls button:hover{background:#f3f8f4}.leaflet-tile-pane{filter:contrast(.92) brightness(1.04)}@media(max-width:750px){.app.sidebar-hidden{grid-template-rows:100dvh 0;grid-template-columns:1fr}.app.sidebar-hidden .side{display:none}.map-controls{top:9px;left:9px}}`;
