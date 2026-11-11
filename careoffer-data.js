@@ -70,8 +70,11 @@ if(typeof L.maplibreGL==='function'){
    try{
     const before=(vectorMap.getStyle()?.layers||[]).find(l=>l.type==='symbol')?.id;
     const railwayFilter=['in',['get','class'],['literal',['rail','transit']]];
-    const railWidth=['interpolate',['linear'],['zoom'],9,1.6,13,2.8,17,4];
-    vectorMap.addLayer({id:'tokuyo-rail-bed',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#f8f9fa','line-width':['+',railWidth,1.2]}},before);
+    // Distant parallel tracks should stay separate instead of merging into a thick stripe.
+    // At detailed zooms (13+) retain the existing rail appearance.
+    const railWidth=['interpolate',['linear'],['zoom'],9,0.55,11,1.1,13,2.8,17,4];
+    const railBedPadding=['interpolate',['linear'],['zoom'],9,0.4,11,0.7,13,1.2];
+    vectorMap.addLayer({id:'tokuyo-rail-bed',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#f8f9fa','line-width':['+',railWidth,railBedPadding]}},before);
     vectorMap.addLayer({id:'tokuyo-rail-ties',type:'line',source:transportationLayer.source,'source-layer':'transportation',filter:railwayFilter,paint:{'line-color':'#87939e','line-width':railWidth,'line-dasharray':[7,4]}},before);
    }catch(error){console.info('鉄道路線の模様を変更できませんでした',error.message)}
   }
