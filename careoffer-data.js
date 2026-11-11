@@ -10,6 +10,11 @@ if(typeof L.maplibreGL==='function'){
  vectorMap.on('load',()=>{
   // Suppress English/romanized fallback labels. Only source Japanese names display.
   for(const layer of vectorMap.getStyle()?.layers||[]){
+   // The Bright basemap draws its own railway strokes. Hide those dedicated
+   // railway layers so parallel tracks do not merge with our custom overlay.
+   if(layer.type==='line'&&layer['source-layer']==='transportation'&&/rail|transit/i.test(layer.id)){
+    try{vectorMap.setPaintProperty(layer.id,'line-opacity',0)}catch(error){console.info('元の鉄道路線の非表示を省略しました',layer.id,error.message)}
+   }
    // Google Maps-like subdued gray roads, keeping parks, water and rail lines intact.
    if(layer.type==='line'&&layer['source-layer']==='transportation'&&!/rail|ferry|water|path|foot|cycle|trail/i.test(layer.id)){
     const id=layer.id.toLowerCase();
@@ -125,6 +130,7 @@ fetch('https://raw.githubusercontent.com/piuccio/open-data-jp-railway-stations/m
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
 document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：OpenFreeMap・OpenStreetMap';
+const versionLabel=document.createElement('div');versionLabel.textContent='バージョン：v1.0.0';versionLabel.style.marginTop='5px';document.querySelector('.footer').append(versionLabel);
 document.querySelector('.sub').remove();
 document.querySelector('.notice').remove();
 const style=document.createElement('style');style.textContent=`.map-wrap #map{background:#edf4ed}.leaflet-container{font-family:inherit}.map-overlay{border:1px solid #e6eae5;box-shadow:0 5px 18px #244b3515}.pin{width:36px;height:40px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);border-radius:11px 11px 2px 2px;font-size:12px}.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(28,122,87,.18)}.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#177a5a;color:white;font-weight:800}.facility{transition:background .15s}.facility:hover{background:#eef7f1}.map-loading{position:absolute;z-index:900;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#38614f;border:1px solid #dde8e0;border-radius:100px;padding:10px 18px;font-size:12px;box-shadow:0 3px 12px #2345}.app.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}.app.sidebar-hidden .side{visibility:hidden;overflow:hidden}.map-controls{position:absolute;z-index:850;top:16px;left:16px;display:flex;gap:8px}.map-controls button{border:1px solid #dbe4df;box-shadow:0 3px 14px #243a3121;background:#fff;border-radius:10px;padding:10px 12px;color:#244f40;font-weight:700;font-size:13px;cursor:pointer}.map-controls button:hover{background:#f3f8f4}.leaflet-tile-pane{filter:contrast(.92) brightness(1.04)}@media(max-width:750px){.app.sidebar-hidden{grid-template-rows:100dvh 0;grid-template-columns:1fr}.app.sidebar-hidden .side{display:none}.map-controls{top:9px;left:9px}}`;
