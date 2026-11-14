@@ -1,0 +1,69 @@
+{
+  "description": "前回の会話で挙げられた8施設の暫定リスト。空室・待機情報の公式掲載URL未復元。正式確認後に verification を confirmed にし、evidenceUrl に直接URLを登録する。",
+  "records": [
+    {
+      "id": "1273900413",
+      "serviceCode": "510",
+      "name": "特別養護老人ホーム　しすいの郷",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1270101114",
+      "serviceCode": "510",
+      "name": "特別養護老人ホームあかいの郷",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1270500539",
+      "serviceCode": "510",
+      "name": "特別養護老人ホームけやき園",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1270910076",
+      "serviceCode": "510",
+      "name": "特別養護老人ホーム　船橋グリーンてらす",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1272404748",
+      "serviceCode": "510",
+      "name": "特別養護老人ホーム　やまき",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1292400320",
+      "serviceCode": "540",
+      "name": "地域密着型特別養護老人ホーム　よろこび",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1292400478",
+      "serviceCode": "540",
+      "name": "地域密着型特別養護老人ホーム　おおまや",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    },
+    {
+      "id": "1271302042",
+      "serviceCode": "510",
+      "name": "特別養護老人ホーム船形サルビア荘",
+      "evidenceUrl": "",
+      "verification": "prior-chat-provisional"
+    }
+  ],
+  "excludedNames": [
+    "松寿園",
+    "松寿園アネックス",
+    "和陽園",
+    "ローゼンヴィラはま野",
+    "アフェクシオン市川",
+    "さくらの丘"
+  ]
+}

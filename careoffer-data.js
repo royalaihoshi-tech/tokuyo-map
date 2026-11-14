@@ -130,13 +130,15 @@ fetch('https://raw.githubusercontent.com/piuccio/open-data-jp-railway-stations/m
 // Display a shorter facility name while preserving the official name for matching and search.
 const displayFacilityName=name=>name.replace(/特別養護老人ホーム[\s\u3000]*/g,'').trim()||name;
 document.querySelector('.footer').textContent='施設情報：厚生労働省「介護サービス情報公表システム」 ／ 地図：OpenFreeMap・OpenStreetMap';
-const versionLabel=document.createElement('div');versionLabel.textContent='バージョン：v1.1.0';versionLabel.style.marginTop='5px';document.querySelector('.footer').append(versionLabel);
+const versionLabel=document.createElement('div');versionLabel.textContent='バージョン：v1.2.13';versionLabel.style.marginTop='5px';document.querySelector('.footer').append(versionLabel);
 document.querySelector('.sub').remove();
 document.querySelector('.notice').remove();
 const style=document.createElement('style');style.textContent=`.map-wrap #map{background:#edf4ed}.leaflet-container{font-family:inherit}.map-overlay{border:1px solid #e6eae5;box-shadow:0 5px 18px #244b3515}.pin{width:36px;height:40px;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);border-radius:11px 11px 2px 2px;font-size:12px}.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(28,122,87,.18)}.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#177a5a;color:white;font-weight:800}.facility{transition:background .15s}.facility:hover{background:#eef7f1}.map-loading{position:absolute;z-index:900;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#38614f;border:1px solid #dde8e0;border-radius:100px;padding:10px 18px;font-size:12px;box-shadow:0 3px 12px #2345}.app.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}.app.sidebar-hidden .side{visibility:hidden;overflow:hidden}.map-controls{position:absolute;z-index:850;top:16px;left:16px;display:flex;gap:8px}.map-controls button{border:1px solid #dbe4df;box-shadow:0 3px 14px #243a3121;background:#fff;border-radius:10px;padding:10px 12px;color:#244f40;font-weight:700;font-size:13px;cursor:pointer}.map-controls button:hover{background:#f3f8f4}.leaflet-tile-pane{filter:contrast(.92) brightness(1.04)}@media(max-width:750px){.app.sidebar-hidden{grid-template-rows:100dvh 0;grid-template-columns:1fr}.app.sidebar-hidden .side{display:none}.map-controls{top:9px;left:9px}}`;
 document.head.append(style);
 style.textContent+=`.pin-label{display:none;position:absolute;top:43px;left:50%;transform:translateX(-50%);white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:700;color:#263c32;background:#f2f5f3;border:2px solid #84968a;padding:3px 7px;border-radius:6px;box-shadow:0 2px 7px #1b3c2826;pointer-events:none}.pin-label.low{background:#e4f6ec;border-color:#15976a;color:#116745}.pin-label.mid{background:#e3efff;border-color:#2866bd;color:#174785}.pin-label.high{background:#fff0d9;border-color:#ed8b24;color:#91500c}.pin-label.higher{background:#fce8e3;border-color:#dc6654;color:#8f302e}.pin-label.highest{background:#f4e3eb;border-color:#a84471;color:#76264e}.pin-label.unknown{background:#edf1ee;border-color:#84968a;color:#4c6156}.pin.mid{background:#2866bd}.pin.high{background:#ed8b24}.pin.higher{background:#dc6654}.pin.highest{background:#a84471}.regional-frame{position:absolute;top:-5px;left:-5px;width:46px;height:50px;padding:5px;background:#2445c2;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);filter:drop-shadow(0 0 4px #2445c2)}.regional-frame .pin{border:0}.pin-label.regional-label{box-shadow:inset 4px 0 #2445c2,0 2px 7px #1b3c2826}.map-wrap.labels-visible .pin-label{display:block}.leaflet-marker-icon{overflow:visible!important}.map-controls{flex-wrap:wrap;max-width:calc(100% - 28px)}.map-overlay{max-width:min(380px,calc(100% - 18px))}.map-overlay .legend{max-width:340px}.map-overlay .legend-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.map-overlay .legend-toggle{border:1px solid #cbd9d3;border-radius:7px;background:#f8fbf9;color:#285642;font-weight:700;font-size:12px;padding:4px 8px;cursor:pointer}.map-overlay.is-collapsed .legend-content{display:none}`;
 style.textContent+=`.regional-frame{top:0;left:0;width:36px;height:40px;padding:3px;background:#f2cb12;filter:none}.regional-frame .pin{width:30px;height:34px;border:0}.pin-label.regional-label{box-shadow:inset 4px 0 #f2cb12,0 2px 7px #1b3c2826}.room-icons{position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);display:flex;gap:2px;white-space:nowrap;pointer-events:none}.room-icon{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 3px;border-radius:5px;background:#fff;color:#263e50;border:1.5px solid #607a89;font-size:12px;font-weight:850;box-shadow:0 1px 4px #0004}.room-icons:empty{display:none}`;
+// Official publication: preserve waiting-number colors and regional frame.
+style.textContent+=`.official-frame{position:absolute;inset:0;width:36px;height:40px;padding:3px;background:#e32335;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%)}.official-frame .pin{width:30px;height:34px;border:0}.official-frame.is-regional{padding:3px}.official-frame.is-regional .regional-frame{position:relative;inset:auto;width:30px;height:34px;padding:3px;background:#ffed00}.official-frame.is-regional .regional-frame .pin{width:24px;height:28px;border:0;font-size:11px}.pin-label.official-label{box-shadow:inset 4px 0 #e32335,0 2px 7px #1b3c2826}.pin-label.official-label.regional-label{box-shadow:inset 4px 0 #e32335,inset 8px 0 #ffed00,0 2px 7px #1b3c2826}`;
 style.textContent+=`.regional-frame{background:#ffed00}.pin-label.regional-label{box-shadow:inset 4px 0 #ffed00,0 2px 7px #1b3c2826}.room-icons{top:-8px;bottom:auto;z-index:3;gap:1px}.room-icon{min-width:21px;width:21px;height:21px;padding:0;border-radius:50%;background:#fff;color:#173b5c;border:2px solid #285784;font-size:11px;line-height:1;box-shadow:0 1px 4px #172d3e70}`;
 style.textContent+='.map-wrap.room-icons-hidden .room-icons{display:none!important}';
 style.textContent+=`.address-search{margin:0 0 13px;padding:11px 12px;background:#fff5f3;border:1px solid #ffd8d3;border-radius:11px}.address-search label{display:block;font-size:12px;font-weight:800;color:#9b302f;margin-bottom:7px}.address-search .address-actions{display:flex;gap:6px;margin-top:6px}.address-search .address-actions button{border:0;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;font-weight:750}.address-search .address-actions .find-home{background:#dc4146;color:#fff;flex:1}.address-search .address-actions .clear-home{background:#fff;border:1px solid #f0c2bd;color:#8a4a46}.address-search .address-help,.address-search .address-result{font-size:11px;line-height:1.5;color:#916b66;margin:6px 0 0}.home-pin{width:36px;height:36px;border:3px solid #fff;border-radius:50%;background:#e53c43;display:grid;place-items:center;box-shadow:0 2px 9px #8e273b80}.home-pin svg{width:22px;height:22px;fill:#fff}.facility-memo{margin-top:12px;padding-top:10px;border-top:1px solid #e0e8e3}.facility-memo label{display:block;font-size:12px;font-weight:800;color:#355e49;margin-bottom:5px}.facility-memo textarea{width:100%;min-height:82px;resize:vertical;border:1px solid #bfd3c6;border-radius:7px;padding:8px;font:13px/1.5 inherit;box-sizing:border-box}.facility-memo small{color:#708078;font-size:11px}`;
@@ -285,13 +287,46 @@ publicationInput.onchange=async()=>{
   alert(`公式の公表日時${changed}施設・居室タイプ${roomChanged}施設を読み込みました。`);
  }catch(error){alert(error.message||'CSVを読み込めませんでした')}finally{publicationInput.value=''}
 };
-document.querySelector('.map-overlay').innerHTML='<div class="legend-head"><b>待機人数</b><button class="legend-toggle" id="toggle-legend" type="button" aria-expanded="true">非表示</button></div><div class="legend-content"><div class="legend"><span><i class="dot" style="background:#15976a"></i>1〜30人</span><span><i class="dot" style="background:#2866bd"></i>31〜60人</span><span><i class="dot" style="background:#ed8b24"></i>61〜100人</span><span><i class="dot" style="background:#dc6654"></i>101〜150人</span><span><i class="dot" style="background:#a84471"></i>151人以上</span><span><i class="dot" style="background:#84968a"></i>不明（0人表記含む）</span></div><div style="margin-top:9px;color:#425b75;font-size:11px">黄色い枠線：地域密着型特養</div><div style="margin-top:5px;color:#425b75;font-size:11px">居室：ユ＝ユニット型個室　個＝従来型個室　多＝従来型多床室（確認できた施設のみ）</div></div>';
+document.querySelector('.map-overlay').innerHTML='<div class="legend-head"><b>待機人数</b><button class="legend-toggle" id="toggle-legend" type="button" aria-expanded="true">非表示</button></div><div class="legend-content"><div class="legend"><span><i class="dot" style="background:#15976a"></i>1〜30人</span><span><i class="dot" style="background:#2866bd"></i>31〜60人</span><span><i class="dot" style="background:#ed8b24"></i>61〜100人</span><span><i class="dot" style="background:#dc6654"></i>101〜150人</span><span><i class="dot" style="background:#a84471"></i>151人以上</span><span><i class="dot" style="background:#84968a"></i>不明（0人表記含む）</span></div><div style="margin-top:9px;color:#425b75;font-size:11px">黄色い枠線：地域密着型特養</div><div style="margin-top:5px;color:#425b75;font-size:11px">赤い枠線：施設公式サイトに空室・待機情報を掲載（過去調査の暫定登録含む）</div><div style="margin-top:5px;color:#425b75;font-size:11px">居室：ユ＝ユニット型個室　個＝従来型個室　多＝従来型多床室（確認できた施設のみ）</div></div>';
+
+const popupStyle=document.createElement('style');popupStyle.textContent=`
+.facility-popup{min-width:0}
+.facility-popup .facility-popup-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:2px}
+.facility-popup .facility-popup-head h3{margin:0;flex:1;font-size:16px;line-height:1.35}
+.facility-popup .facility-popup-wait{flex:0 0 auto;white-space:nowrap;font-size:11px;font-weight:700;color:#6b5420;background:#fbf2cf;border:1px solid #e3d7a1;border-radius:999px;padding:2px 8px;line-height:1.4;margin-top:1px}
+/* Match the waiting-count badge to the map pins. */
+.facility-popup .facility-popup-wait.low{background:#15976a;color:#fff;border-color:#15976a}
+.facility-popup .facility-popup-wait.mid{background:#2866bd;color:#fff;border-color:#2866bd}
+.facility-popup .facility-popup-wait.high{background:#ed8b24;color:#fff;border-color:#ed8b24}
+.facility-popup .facility-popup-wait.higher{background:#dc6654;color:#fff;border-color:#dc6654}
+.facility-popup .facility-popup-wait.highest{background:#a84471;color:#fff;border-color:#a84471}
+.facility-popup .facility-popup-wait.unknown{background:#84968a;color:#fff;border-color:#84968a}
+.facility-popup .facility-popup-date{margin:2px 0 12px;padding-bottom:3px;color:#38564b;font-size:12px}
+.facility-popup .facility-popup-address,.facility-popup .facility-popup-phone,.facility-popup .facility-popup-capacity{margin:4px 0;color:#53685d}
+.facility-popup .popup-link-row{margin:8px 0 0}
+.facility-popup .popup-link{display:inline-flex;align-items:center;gap:6px;max-width:100%;text-decoration:none;vertical-align:middle;line-height:1.6}
+.facility-popup .popup-link-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#eef6f1;font-size:11px;flex:0 0 18px;line-height:1}
+.facility-popup .popup-link-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 13px;width:13px;height:15px;margin-left:2px;font-size:13px;line-height:1;color:inherit;vertical-align:middle}
+.facility-popup .facility-website-line{display:flex;align-items:center;gap:7px;min-width:0}
+.facility-popup .facility-website-line .popup-link-row{flex:1;min-width:0}
+.facility-popup .facility-site-edit{flex:0 0 auto;border:1px solid #c6ddd0;border-radius:6px;background:#f5faf7;padding:3px 7px;color:#38745c;font-size:13px;cursor:pointer}
+.facility-popup .facility-site-form{margin:8px 0 6px;background:#f6faf7;border:1px solid #d6e5db;padding:10px;border-radius:8px}
+.facility-popup .facility-site-form label{font-size:12px;font-weight:600;display:block;margin-bottom:5px}
+.facility-popup .facility-site-form input{font-size:12px;padding:8px;border-radius:5px;width:100%;border:1px solid #c7d9cd}
+.facility-popup .facility-site-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}
+.facility-popup .facility-site-actions button{font-size:12px;padding:5px 10px;border:1px solid #c6d8cc;border-radius:6px;cursor:pointer}
+.facility-popup .facility-site-save{background:#147956;color:white;border-color:#147956!important}
+.facility-popup .facility-site-status{min-height:1em;font-size:11px;margin-top:5px;color:#5f7467}
+
+`;document.head.appendChild(popupStyle);
+
 document.getElementById('toggle-legend').onclick=()=>{const overlay=document.querySelector('.map-overlay'),hidden=overlay.classList.toggle('is-collapsed'),button=document.getElementById('toggle-legend');button.textContent=hidden?'表示':'非表示';button.setAttribute('aria-expanded',String(!hidden))};
 document.querySelector('.map-overlay').classList.add('legend-hidden');
 style.textContent+='.map-overlay.legend-hidden{display:none}';
 document.getElementById('waiting').remove();
 document.querySelector('.top .filters').style.gridTemplateColumns='1fr';
 const controls=document.createElement('div');controls.className='map-controls filter-toolbar';controls.setAttribute('aria-label','地図の表示と施設の絞り込み');controls.innerHTML='<div class="toolbar-group group-display"><span class="toolbar-heading">表示設定</span><button id="toggle-sidebar" type="button" aria-expanded="true">☰ 設定を閉じる</button></div>';document.querySelector('.map-wrap').append(controls);
+if(window.TokuyoSharedMemos)window.TokuyoSharedMemos.mountSettingsLogout();
 document.querySelector('.app').classList.add('sidebar-hidden');
 const sidebarButton=document.getElementById('toggle-sidebar');sidebarButton.textContent='☰ 設定を開く';sidebarButton.setAttribute('aria-expanded','false');
 const pinsButton=document.createElement('button');pinsButton.id='toggle-facility-pins';pinsButton.type='button';pinsButton.textContent='施設ピン：ON';pinsButton.setAttribute('aria-pressed','true');controls.querySelector('.group-display').append(pinsButton);
@@ -309,6 +344,7 @@ const nameButton=document.createElement('button');nameButton.id='toggle-names';n
 const roomBadgeButton=document.createElement('button');roomBadgeButton.id='toggle-room-badges';roomBadgeButton.type='button';roomBadgeButton.textContent='居室バッジ：ON';roomBadgeButton.setAttribute('aria-pressed','true');controls.querySelector('.group-display').append(roomBadgeButton);
 roomBadgeButton.onclick=()=>{const hidden=document.querySelector('.map-wrap').classList.toggle('room-icons-hidden');roomBadgeButton.textContent=hidden?'居室バッジ：OFF':'居室バッジ：ON';roomBadgeButton.setAttribute('aria-pressed',String(!hidden))};
 const filterBar=document.createElement('div');filterBar.className='toolbar-filters';filterBar.innerHTML='<div class="toolbar-group group-room"><span class="toolbar-heading">居室タイプ</span><button class="room-badge" type="button" data-room="unit" aria-label="ユニット型個室" title="ユニット型個室" aria-pressed="false">ユ</button><button class="room-badge" type="button" data-room="private" aria-label="従来型個室" title="従来型個室" aria-pressed="false">個</button><button class="room-badge" type="button" data-room="shared" aria-label="従来型多床室" title="従来型多床室" aria-pressed="false">多</button></div><div class="toolbar-group group-region"><span class="toolbar-heading">施設区分</span><button type="button" data-regional="true" aria-pressed="false">地域密着型のみ</button></div><div class="toolbar-group group-wait"><span class="toolbar-heading">待機人数</span><button type="button" data-wait="low" aria-pressed="false">1〜30人</button><button type="button" data-wait="mid" aria-pressed="false">31〜60人</button><button type="button" data-wait="high" aria-pressed="false">61〜100人</button><button type="button" data-wait="higher" aria-pressed="false">101〜150人</button><button type="button" data-wait="highest" aria-pressed="false">151人以上</button><button type="button" data-wait="unknown" aria-pressed="false">不明</button></div><div class="toolbar-group group-date"><span class="toolbar-heading">厚労省 公表日時</span><button type="button" data-date="recent" aria-pressed="false">3か月以内</button><button type="button" data-date="half" aria-pressed="false">3〜6か月</button><button type="button" data-date="year" aria-pressed="false">6か月〜1年</button><button type="button" data-date="old" aria-pressed="false">1年以上</button><button type="button" data-date="unknown" aria-pressed="false">未取得</button></div><span class="filter-count" id="filtered-facility-count" role="status" aria-live="polite">該当 —施設</span>';controls.append(filterBar);
+if(window.TokuyoSharedMemos)window.TokuyoSharedMemos.mountGlobalAuth(filterBar);
 const selectedRooms=new Set(),selectedWaits=new Set(),selectedDates=new Set();let regionalOnly=false;
 function dateBucket(value){
  const date=/^(\d{4})-(\d{2})-(\d{2})/.exec(value||'');
@@ -357,11 +393,55 @@ draw=function(fit=false){
  const bounds=[];
  for(const f of visible){
   const shortName=displayFacilityName(f.name);
-  const cls=level(f.wait),regional=f.type==='地域密着型特養',pin=`<div class="pin ${cls}">${f.wait??'?'}</div>`,roomLabels={unit:'ユ',private:'個',shared:'多'},roomIcons=(f.roomTypes||[]).filter(t=>roomLabels[t]).map(t=>`<span class="room-icon">${roomLabels[t]}</span>`).join(''),icon=L.divIcon({html:`${regional?`<div class="regional-frame">${pin}</div>`:pin}<span class="room-icons">${roomIcons}</span><span class="pin-label ${cls}${regional?' regional-label':''}">${esc(shortName)}</span>`,iconSize:[36,40],iconAnchor:[18,40]});
+  const cls=level(f.wait),regional=f.type==='地域密着型特養',official=window.TokuyoOfficialPublications?.get(f.id,f.serviceCode||510),pin=`<div class="pin ${cls}">${f.wait??'?'}</div>`,roomLabels={unit:'ユ',private:'個',shared:'多'},roomIcons=(f.roomTypes||[]).filter(t=>roomLabels[t]).map(t=>`<span class="room-icon">${roomLabels[t]}</span>`).join(''),icon=L.divIcon({html:`${official?`<div class="official-frame${regional?' is-regional':''}">${regional?`<div class="regional-frame">${pin}</div>`:pin}</div>`:regional?`<div class="regional-frame">${pin}</div>`:pin}<span class="room-icons">${roomIcons}</span><span class="pin-label ${cls}${regional?' regional-label':''}${official?' official-label':''}">${esc(shortName)}</span>`,iconSize:[36,40],iconAnchor:[18,40]});
   const waiting=f.wait==null?'不明':f.wait+'人';
+  const waitBadge=f.wait==null?'待機 不明':`待機 ${f.wait}人`;
+  const publishedText=f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得';
+  const defaultWebsite=f.website;
+  const siteKey=`${f.id}_${f.serviceCode||510}`;
+  const bestWebsite=window.TokuyoFacilityWebsites?.get(f.id,f.serviceCode||510)||defaultWebsite;
   const detailURL=f.id&&/^\d{10}$/.test(f.id)?`https://www.kaigokensaku.mhlw.go.jp/12/index.php?action_kouhyou_detail_024_kani=true&JigyosyoCd=${f.id}-00&ServiceCd=${f.serviceCode||510}#title07`:'';
+  const detailLink=detailURL?`<p class="popup-link-row"><a class="popup-link" href="${detailURL}" target="_blank" rel="noopener noreferrer"><span class="popup-link-icon" aria-hidden="true">🏛</span><span>厚労省の施設詳細を確認</span><span class="popup-link-arrow" aria-hidden="true">↗</span></a></p>`:'';
+  const websiteLink=`<div class="facility-website-line" data-site-key="${esc(siteKey)}"><p class="popup-link-row facility-website-link">${bestWebsite&&/^https?:\/\//.test(bestWebsite)?`<a class="popup-link" href="${esc(bestWebsite)}" target="_blank" rel="noopener noreferrer"><span class="popup-link-icon" aria-hidden="true">🌐</span><span>施設の公式サイト</span><span class="popup-link-arrow" aria-hidden="true">↗</span></a>`:'<span>公式サイト未登録</span>'}</p><button class="facility-site-edit" type="button" title="公式サイトURLを編集" aria-label="公式サイトURLを編集">✎</button></div><div class="facility-site-form-host"></div>`;
   const m=L.marker([f.lat,f.lng],{icon}).bindTooltip(`${esc(shortName)}｜待機 ${waiting}`,{direction:'top'})
-    .bindPopup(`<div class="popup"><h3>${esc(shortName)}</h3><p>${esc(f.address)}</p><p><b>待機人数：${waiting}</b></p><p>施設区分：${esc(f.type||'未登録')}</p><p><b>厚労省 公表日時：${f.publishedAt?esc(f.publishedAt.replaceAll('-','/')):'未取得'}</b></p>${Number(f.capacity)>0?`<p>定員：${esc(f.capacity)}人</p>`:'<p>定員：未確認</p>'}${f.phone?`<p>電話：${esc(f.phone)}</p>`:''}${detailURL?`<p><a href="${detailURL}" target="_blank" rel="noopener noreferrer">厚労省の施設詳細を確認 ↗</a></p>`:''}${f.website&&/^https?:\/\//.test(f.website)?`<p><a href="${esc(f.website)}" target="_blank" rel="noopener noreferrer">施設の公式サイト ↗</a></p>`:''}</div>`,{maxWidth:350});
+    .bindPopup(`<div class="popup facility-popup"><div class="facility-popup-head"><h3>${esc(shortName)}</h3><div class="facility-popup-wait ${cls}">${waitBadge}</div></div><p class="facility-popup-date"><b>厚労省 公表日時：${publishedText}</b></p><p class="facility-popup-address">${esc(f.address)}</p>${f.phone?`<p class="facility-popup-phone">電話：${esc(f.phone)}</p>`:''}${Number(f.capacity)>0?`<p class="facility-popup-capacity">定員：${esc(f.capacity)}人</p>`:'<p class="facility-popup-capacity">定員：未確認</p>'}${detailLink}${websiteLink}</div>`,{maxWidth:620,minWidth:310});
+  // Shared notes are loaded only after a staff member has signed in.
+  m.on('popupopen',event=>{
+    const container=event.popup.getElement()?.querySelector('.popup');
+    if(container){
+      // Use the latest staff-editable URL, including changes made on another device.
+      const current=window.TokuyoFacilityWebsites?.get(f.id,f.serviceCode||510)||defaultWebsite;
+      const row=container.querySelector('.facility-website-link');
+      function renderLink(url){if(!row)return;row.textContent='';if(url&&/^https?:\/\//.test(url)){
+        const a=document.createElement('a');a.className='popup-link';a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+        a.innerHTML='<span class="popup-link-icon" aria-hidden="true">🌐</span><span>施設の公式サイト</span><span class="popup-link-arrow" aria-hidden="true">↗</span>';row.append(a);
+      }else{row.textContent='公式サイト未登録';}}
+      renderLink(current);
+      const edit=container.querySelector('.facility-site-edit'),host=container.querySelector('.facility-site-form-host');
+      edit?.addEventListener('click',()=>{
+        if(host.querySelector('form')){host.textContent='';return;}
+        const form=document.createElement('form');form.className='facility-site-form';
+        const lbl=document.createElement('label');lbl.textContent='公式サイトのURLを変更';
+        const input=document.createElement('input');input.type='url';input.required=true;input.placeholder='https://example.jp/facility/';input.value=window.TokuyoFacilityWebsites?.get(f.id,f.serviceCode||510)||defaultWebsite||'';
+        const actions=document.createElement('div');actions.className='facility-site-actions';
+        const cancel=document.createElement('button');cancel.type='button';cancel.textContent='キャンセル';cancel.onclick=()=>host.replaceChildren();
+        const save=document.createElement('button');save.type='submit';save.className='facility-site-save';save.textContent='保存';
+        const status=document.createElement('div');status.className='facility-site-status';status.setAttribute('role','status');
+        actions.append(cancel,save);form.append(lbl,input,actions,status);host.replaceChildren(form);
+        form.addEventListener('submit',async ev=>{
+          ev.preventDefault();save.disabled=true;status.textContent='保存中…';
+          try{const url=await window.TokuyoFacilityWebsites.set(f.id,f.serviceCode||510,input.value,defaultWebsite);
+            renderLink(url);status.textContent='変更しました。他のスタッフにも反映されます。';setTimeout(()=>{if(host.contains(form))host.replaceChildren()},1200);
+          }catch(err){status.textContent=err.message||'保存できませんでした。設定と通信状態を確認してください。'}
+          finally{save.disabled=false}
+        });
+        input.focus();input.select();
+      });
+      const off=window.TokuyoFacilityWebsites?.onChange(()=>renderLink(window.TokuyoFacilityWebsites.get(f.id,f.serviceCode||510)||defaultWebsite));
+      m.once('popupclose',()=>off?.());
+      if(window.TokuyoSharedMemos)window.TokuyoSharedMemos.mount(container,String(f.id),String(f.serviceCode||510),shortName);
+    }
+  });
   placedMarkers.push({marker:m,original:L.latLng(f.lat,f.lng)});
   markers.addLayer(m);bounds.push([f.lat,f.lng]);
  }
@@ -371,5 +451,5 @@ draw=function(fit=false){
 const loading=document.createElement('div');loading.className='map-loading';loading.textContent='千葉県の施設情報を読み込み中…';document.querySelector('.map-wrap').append(loading);
 fetch('./facilities.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('施設一覧が取得できませんでした');return r.json()}).then(async data=>{
  all=data.facilities.filter(f=>Number.isFinite(f.lat)&&Number.isFinite(f.lng)).map(f=>({...f,wait:f.wait===0?null:f.wait,publishedAt:importedDates[`${f.id}:${f.serviceCode}`]||f.publishedAt,roomTypes:importedRooms[`${f.id}:${f.serviceCode}`]||f.roomTypes}));
- populate();draw(true);loading.remove();await refreshNewFacilities();await refreshPublicOfficialData();
+ populate();draw(true);window.TokuyoOfficialPublicationsChanged=()=>draw(false);loading.remove();await refreshNewFacilities();await refreshPublicOfficialData();
 }).catch(error=>{loading.textContent='データ読込エラー：再読み込みしてください';console.error(error)});
